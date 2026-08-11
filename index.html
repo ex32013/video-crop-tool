@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>视频裁剪工具</title>
+<!-- ⚠️ 开发提醒: 每次修改本文件后, 浏览器可能缓存旧版导致改动"看不到"。
+     请用 Ctrl+F5 强制刷新, 或 F12 → Network → Disable cache, 或换无痕窗口。
+     若经服务器(8000/8003)访问, 服务器已带 Cache-Control: no-store。 -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0B0F16; color: #C0C8D6; font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif; padding: 20px; }
+  h1 { font-size: 22px; margin-bottom: 16px; letter-spacing: 2px; color: #F2F4F8; }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .bar label { font-size: 14px; color: #86909C; }
+  select, button, input[type=number] { padding: 6px 10px; border-radius: 6px; border: 1px solid #252D3A; background: #161B26; color: #C9CDD4; font-size: 13px; }
+  input[type=text], textarea, input:not([type]) { background: #161B26; color: #C9CDD4; border: 1px solid #252D3A; border-radius: 6px; }
+  select:hover, button:hover, input:hover, textarea:hover { border-color: #3A475A; }
+  select:focus, button:focus, input:focus, textarea:focus { outline: none; border-color: #23A3C8; }
+  button { cursor: pointer; }
+  button:hover { background: #1C2433; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.active { background: #d92222; border-color: #d92222; }
+  .btn-primary { background: #23A3C8; border-color: #23A3C8; color: #fff; font-weight: 700; }
+  .btn-primary:hover { background: #2FB6DC; border-color: #2FB6DC; }
+  .btn-sec { background: #161B26; border-color: #23A3C8; color: #7FD4EC; }
+  .btn-sec:hover { background: #1C2433; }
+  .btn-danger { border-color: #D64848; color: #E58B8B; background: #161B26; }
+  .btn-danger:hover { background: #251B1B; border-color: #D64848; }
+  .wrap { display: flex; gap: 20px; align-items: flex-start; }
+  .stage { position: relative; width: 960px; height: 540px; background: #0A0D12; border: 1px solid #252D3A; border-radius: 10px; overflow: hidden; flex: none; box-shadow: inset 0 0 16px rgba(0,0,0,0.35); }
+  #video { width: 100%; height: 100%; background: #0A0D12; }
+  #sel { position: absolute; border: 2px solid #37A8CC; background: rgba(35,163,200,0.08); display: none; pointer-events: none; z-index: 3; }
+  #selmask { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  #selmask div { position: absolute; background: rgba(0,0,0,0.6); }
+  #selcoords { position: absolute; z-index: 4; font-family: monospace; font-size: 11px; color: #E4E8F0; background: rgba(10,13,18,0.65); border: 1px solid #37A8CC; text-shadow: 0 1px 2px rgba(0,0,0,0.8); padding: 1px 6px; border-radius: 3px; display: none; pointer-events: none; white-space: nowrap; }
+  #info { position: absolute; top: 6px; left: 6px; z-index: 5; font-size: 12px; color: #B9D9E6; background: rgba(10,13,18,0.72); padding: 3px 8px; border-radius: 4px; pointer-events: none; border: 1px solid #252D3A; }
+  .side { flex: none; width: 360px; background: #212A3B; border: 1px solid #39445C; border-radius: 10px; padding: 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  .side h3 { font-size: 15px; margin-bottom: 8px; color: #F2F4F8; }
+  .preview-box { width: 100%; height: 220px; background: #0A0D12; border: 1px solid #252D3A; border-radius: 8px; overflow: hidden; position: relative; box-shadow: inset 0 0 14px rgba(0,0,0,0.35); }
+  #preview { width: 100%; height: 100%; object-fit: contain; }
+  .coord { margin-top: 12px; font-family: monospace; font-size: 13px; background: #10141E; padding: 10px; border-radius: 6px; line-height: 1.7; white-space: pre-wrap; color: #C9CDD4; border: 1px solid #252D3A; }
+  .warn-msg { color: #FFB84D; font-size: 12px; margin-top: 8px; display: none; line-height: 1.5; }
+  .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+  .row input { width: 90px; }
+  .tip { font-size: 12px; color: #808A9C; margin-top: 10px; line-height: 1.6; }
+  .seg-box { margin-top: 22px; max-width: 960px; }
+  .seg-head { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .seg-head h3 { font-size: 15px; margin: 0; color: #F2F4F8; }
+  #segTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  #segTable th, #segTable td { border: 1px solid #252D3A; padding: 5px 8px; text-align: left; }
+  #segTable tbody tr:nth-child(odd) { background: #161B26; }
+  #segTable tbody tr:nth-child(even) { background: #1A202C; }
+  #segTable input { width: 84px; padding: 4px 6px; background: #10141E; }
+  #segTable input.name { width: 170px; }
+  #segTable input.name, #exportDirInput, #fsPath { background: #10141E; color: #C9CDD4; border: 1px solid #252D3A; border-radius: 6px; }
+  #segTable .mini { padding: 2px 8px; font-size: 12px; }
+  #segTable tr.active td { background: rgba(34,160,205,0.12); box-shadow: inset 3px 0 0 #23A3C8; }
+  .export-status { margin-top: 12px; font-size: 13px; line-height: 1.9; font-family: monospace; }
+  .export-status .ok { color: #36B37E; }
+  .export-status .err { color: #D64848; }
+  .export-status a { color: #7FD4EC; }
+  .tl-bar { display: flex; gap: 6px; align-items: center; margin-top: 12px; max-width: 960px; }
+  .tl-bar input[type=range] { flex: 1; padding: 0; accent-color: #23A3C8; }
+  .tl-bar .step { padding: 2px 7px; font-size: 11px; }
+  .tl-slider { flex: 1; position: relative; }
+  .tl-slider input { width: 100%; }
+  .tl-marks { position: absolute; top: 0; left: 0; right: 0; height: 100%; pointer-events: none; }
+  .tl-seg { position: absolute; height: 10px; top: 4px; border-radius: 3px; background: rgba(35,163,200,0.35); border: 1px solid #23A3C8; }
+  .tl-seg .s { position: absolute; left: -2px; top: -3px; width: 5px; height: 14px; background: #36B37E; border-radius: 2px; }
+  .tl-seg .e { position: absolute; right: -2px; top: -3px; width: 5px; height: 14px; background: #FF9F43; border-radius: 2px; }
+  .tl-timecode { font-family: monospace; font-size: 16px; color: #7FD4EC; text-align: center; margin-top: 6px; max-width: 960px; letter-spacing: 1px; }
+  .fs-modal { position: fixed; inset: 0; z-index: 50; background: rgba(5,7,13,0.72); display: none; align-items: center; justify-content: center; }
+  .fs-box { width: 720px; max-width: 92vw; height: 78vh; background: #212A3B; border: 1px solid #39445C; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  .fs-head { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #252D3A; }
+  .fs-head input { flex: 1; font-size: 12px; }
+  .fs-body { flex: 1; overflow: auto; padding: 6px; }
+  .fs-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .fs-row:hover { background: #1C2433; }
+  .fs-row.dir { color: #7FD4EC; }
+  .fs-row.video { color: #C9CDD4; }
+  .fs-row .fs-ico { width: 18px; text-align: center; flex: none; }
+  .fs-row .fs-note { margin-left: auto; font-size: 11px; color: #5D6A80; }
+  .set-modal { position: fixed; inset: 0; z-index: 50; background: rgba(5,7,13,0.72); display: none; align-items: center; justify-content: center; }
+  .set-box { width: 460px; max-width: 92vw; background: #212A3B; border: 1px solid #39445C; border-radius: 10px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  .set-head { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #252D3A; }
+  .set-head h3 { font-size: 15px; margin: 0; flex: 1; color: #F2F4F8; }
+  .set-body { max-height: 60vh; overflow: auto; padding: 8px 12px; }
+  .set-row { display: flex; align-items: center; gap: 10px; padding: 7px 6px; border-bottom: 1px solid #252D3A; }
+  .set-row.rec { background: rgba(35,163,200,0.12); }
+  .set-lbl { flex: 1; font-size: 13px; color: #C9CDD4; }
+  .set-key { min-width: 90px; text-align: center; font-family: monospace; font-size: 13px; color: #FFD76A; background: #10141E; border: 1px solid #252D3A; border-radius: 6px; padding: 3px 8px; }
+  .set-tip { padding: 8px 14px; font-size: 12px; color: #86909C; border-top: 1px solid #252D3A; }
+  .fs-drives { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 8px 8px; border-bottom: 1px solid #252D3A; margin-bottom: 6px; }
+  .fs-drive { padding: 3px 10px; border-radius: 12px; background: #1A202C; border: 1px solid #252D3A; cursor: pointer; font-size: 12px; color: #7FD4EC; }
+  .fs-drive:hover { background: #1C2433; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #363F4F; border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: #46526B; }
+  input[type=checkbox] { accent-color: #23A3C8; width: 15px; height: 15px; }
+  .seg-menu { position: fixed; z-index: 300; background: #1B2230; border: 1px solid #39445C; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; min-width: 120px; }
+  .seg-menu-item { padding: 8px 14px; font-size: 13px; cursor: pointer; color: #C0C8D6; }
+  .seg-menu-item:hover { background: #232E42; }
+  .seg-menu-item.danger { color: #E58B8B; }
+  .seg-menu-item.danger:hover { background: #2A1B1B; }
+  /* 工具栏分组 */
+  .grp { display: inline-flex; gap: 6px; align-items: center; }
+  .grp + .grp { margin-left: 10px; padding-left: 16px; border-left: 2px solid #4A5A70; }
+  details.coord-fold:not([open]) > :not(summary) { display: none !important; }
+  /* 选区四角控制点 */
+  .hl { position: absolute; width: 10px; height: 10px; background: #37A8CC; border: 1px solid #0A0D12; border-radius: 2px; pointer-events: auto; z-index: 5; }
+  .hl.tl { left: -6px; top: -6px; cursor: nwse-resize; }
+  .hl.tr { right: -6px; top: -6px; cursor: nesw-resize; }
+  .hl.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+  .hl.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
+  /* 下方面板内分组 */
+  .seg-head.grp-line { border-top: 1px solid #252D3A; padding-top: 10px; margin-top: 10px; }
+
+  /* 2026-08-11 全量增强样式 */
+  .xyrow { display: flex; gap: 6px; margin-top: 10px; }
+  .xyrow input { width: 25%; min-width: 0; padding: 4px 6px; font-size: 12px; text-align: center; }
+  #thirdsOverlay { position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background:
+      linear-gradient(to right, transparent calc(33.333% - 1px), rgba(255,255,255,0.18) 33.333%, transparent 33.333%),
+      linear-gradient(to right, transparent calc(66.666% - 1px), rgba(255,255,255,0.18) 66.666%, transparent 66.666%),
+      linear-gradient(to bottom, transparent calc(33.333% - 1px), rgba(255,255,255,0.18) 33.333%, transparent 33.333%),
+      linear-gradient(to bottom, transparent calc(66.666% - 1px), rgba(255,255,255,0.18) 66.666%, transparent 66.666%); }
+  #emptyOverlay { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 120% at 50% 30%, #1A2230 0%, #0A0D12 70%); }
+  .empty-in { text-align: center; color: #5D6A80; line-height: 2; }
+  .empty-in b { color: #7FD4EC; font-size: 18px; }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 200;
+    background: #1C2433; color: #C9CDD4; border: 1px solid #23A3C8; border-radius: 8px; padding: 9px 18px; font-size: 13px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5); max-width: 80vw; }
+  .toast.err { border-color: #D64848; color: #E58B8B; }
+  .prog { margin-top: 8px; height: 6px; background: #10141E; border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #23A3C8, #36B37E); border-radius: 3px; transition: width .4s; }
+  details.coord-fold summary { cursor: pointer; font-size: 13px; color: #7FD4EC; user-select: none; margin-bottom: 6px; }
+  details.coord-fold summary:hover { color: #B9D9E6; }
+  #segTable { table-layout: auto; }
+  .seg-box { background: #212A3B; border: 1px solid #39445C; border-radius: 10px; padding: 14px; box-shadow: 0 6px 18px rgba(0,0,0,0.4); }
+  .bar button.active { border-color: #23A3C8; }
+</style>
+</head>
+<body>
+<h1>视频裁剪工具</h1>
+<div class="bar">
+  <span class="grp">
+    <button id="importBtn" title="从本地任意文件夹导入视频">导入视频/文件夹</button>
+    <select id="vlSel" title="已导入的视频, 点击切换" style="min-width:200px">
+      <option value="">— 未加载视频 —</option>
+    </select>
+  </span>
+  <span class="grp">
+    <button id="playBtn" class="btn-sec">播放</button>
+    <button id="replayBtn" class="btn-sec">重播</button>
+    <button id="speedBtn">倍速 ×1</button>
+  </span>
+  <span class="grp">
+    <button id="unimportBtn" title="取消导入, 回到空白" style="display:none">取消导入</button>
+    <button id="clearBtn">清除选区</button>
+    <button id="fullBtn" class="btn-sec" title="选区重置为全屏 1920×1080">全屏</button>
+    <label style="font-size:12px;color:#86909C">比例</label>
+    <select id="ratioSel" style="padding:3px 6px;font-size:12px">
+      <option value="free">自由</option>
+      <option value="16:9">16:9</option>
+      <option value="9:16">9:16</option>
+      <option value="1:1">1:1</option>
+    </select>
+    <select id="presetSel" style="padding:3px 6px;font-size:12px">
+      <option value="">预设尺寸…</option>
+      <option value="full">全屏 1920×1080</option>
+      <option value="vs">竖屏 9:16</option>
+      <option value="cover">封面 1:1</option>
+    </select>
+    <button id="cmpBtn" class="btn-sec" title="原图/裁剪预览对比">原图</button>
+    <button id="zoomResetBtn" title="画面缩放重置(滚轮缩放, Alt+拖拽平移)">缩放 100%</button>
+    <label style="font-size:12px;color:#86909C" title="播放音量">音量</label>
+    <input type="range" id="volSlider" min="0" max="100" value="100" style="width:70px;padding:0">
+  </span>
+  <span class="grp">
+    <button id="setBtn" title="自定义快捷键">设置</button>
+    <label title="当前视频时间跳转(秒)">跳转至(秒):</label>
+    <input type="number" id="frameInput" value="0" min="0" step="0.1" style="width:90px">
+    <button id="gotoBtn">跳转</button>
+    <span style="font-size:12px;color:#808A9C" id="durLabel"></span>
+  </span>
+</div>
+<div class="wrap">
+  <div class="stage">
+    <video id="video" playsinline preload="auto" muted></video>
+    <div id="selmask"><div class="mk-t"></div><div class="mk-b"></div><div class="mk-l"></div><div class="mk-r"></div></div>
+    <div id="thirdsOverlay" style="display:none"></div>
+    <div id="emptyOverlay"><div class="empty-in"><b>视频裁剪工具</b><br>点击「导入视频/文件夹」开始</div></div>
+    <div id="sel"><span class="hl tl"></span><span class="hl tr"></span><span class="hl bl"></span><span class="hl br"></span></div>
+    <div id="selcoords"></div>
+    <div id="info">鼠标拖拽框选裁剪区域</div>
+  </div>
+  <div class="side">
+    <h3>裁剪预览</h3>
+    <div class="preview-box"><img id="preview" alt=""></div>
+    <div class="coord" id="coord">—</div>
+    <div class="xyrow" title="选区坐标(1920×1080原图像素)">
+      <input type="number" id="xyX" placeholder="X"><input type="number" id="xyY" placeholder="Y">
+      <input type="number" id="xyW" placeholder="W"><input type="number" id="xyH" placeholder="H">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="copySelBtn" class="mini" title="复制选区坐标到剪贴板">复制选区</button>
+      <button id="pasteSelBtn" class="mini" title="从剪贴板粘贴坐标">粘贴</button>
+      <button id="thirdsBtn" class="mini" title="三分构图辅助线">三分线</button>
+    </div>
+    <div class="warn-msg" id="selWarn"></div>
+    <div class="tip">框选预览 · 坐标 = 1920×1080 原图像素 · 右击复制坐标</div>
+    <button id="shortcutBtn" class="mini" style="margin-top:8px">⌨ 快捷键设置</button>
+  </div>
+</div>
+<div class="tl-bar">
+  <button class="step" data-d="-1">-1s</button>
+  <button class="step" data-d="-0.5">-0.5s</button>
+  <button class="step" data-d="-0.1">-0.1s</button>
+  <div class="tl-slider">
+    <div class="tl-marks" id="tlMarks"></div>
+    <input type="range" id="timeline" min="0" max="0" step="0.1" value="0" title="拖动时间轴">
+  </div>
+  <button class="step" data-d="0.1">+0.1s</button>
+  <button class="step" data-d="0.5">+0.5s</button>
+  <button class="step" data-d="1">+1s</button>
+</div>
+<div class="tl-timecode" id="tlTime">00:00:00.000</div>
+
+<div class="seg-box">
+  <div class="seg-head">
+    <h3>时间片段</h3>
+    <button id="newSegBtn" title="新建一个空白片段(起止时间与选区稍后设置)">①创建空白片段</button>
+    <button id="setStartBtn" class="btn-sec" title="把当前视频时间写入选中的片段作为开始">②设为起始(当前时间)</button>
+    <button id="setEndBtn" class="btn-sec" title="把当前视频时间写入选中的片段作为结束">③设为结束(当前时间)</button>
+    <button id="setCropBtn" title="把当前框选的区域写入选中片段(未框选则用全图)">④导入当前坐标(默认全图)</button>
+    <button id="exportBtn" class="btn-primary" title="把勾选的片段用 ffmpeg 裁剪导出">导出勾选 → ffmpeg</button>
+    <button id="cancelExportBtn" class="btn-danger">取消导出</button>
+    <button id="batchDelBtn" class="btn-danger" title="删除勾选的片段">删除勾选</button>
+    <button id="batchQBtn" title="把当前画质应用到所有勾选片段">批量画质</button>
+    <button id="batchRenameBtn" title="把勾选片段按顺序重命名为 片段1/2/3…">批量改名</button>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="nameTplChk" title="文件名 = 原文件名_起止时间_裁剪坐标">自动命名</label>
+  </div>
+  <div class="seg-head grp-line">
+    <h3 style="font-size:13px;color:#E4E8F0">导出参数</h3>
+    <label style="font-size:12px;color:#86909C">编码
+      <select id="codecSel" style="padding:3px 6px;font-size:12px">
+        <option value="h264" selected>H.264</option>
+        <option value="av1">AV1</option>
+      </select>
+    </label>
+    <label style="font-size:12px;color:#86909C">格式
+      <select id="fmtSel" style="padding:3px 6px;font-size:12px">
+        <option value="mp4" selected>MP4</option>
+        <option value="mov">MOV</option>
+        <option value="mkv">MKV</option>
+      </select>
+    </label>
+    <label style="font-size:12px;color:#86909C">画质
+      <select id="qSel" style="padding:3px 6px;font-size:12px">
+        <option value="high">高</option>
+        <option value="medium" selected>中</option>
+        <option value="low">低</option>
+      </select>
+    </label>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="fmtDefaultChk"> 设为默认</label>
+    <label style="font-size:12px;color:#86909C" title="同时裁剪几个片段(ffmpeg 多开, 吃 CPU)">并行
+      <select id="concSel" style="padding:3px 6px;font-size:12px">
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="4">4</option>
+      </select>
+    </label>
+    <label style="margin-left:auto;font-size:12px;color:#86909C"><input type="checkbox" id="audioChk" checked> 保留原声</label>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="openFolderChk"> 导出后打开文件夹</label>
+  </div>
+  <div class="seg-head grp-line">
+    <h3 style="font-size:13px;color:#E4E8F0">导出位置</h3>
+    <input id="exportDirInput" readonly spellcheck="false" placeholder="默认: 浏览器下载目录" style="flex:1;min-width:180px;font-size:12px">
+    <button id="browseDirBtn">浏览…</button>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="dirDefaultChk"> 设为默认</label>
+  </div>
+  <table id="segTable">
+    <thead><tr><th><input type="checkbox" id="selAllChk" title="全选/全不选"></th><th>名称</th><th>开始(s)</th><th>结束(s)</th><th>选区(1920×1080)</th><th>操作</th></tr></thead>
+    <tbody id="segTbody"></tbody>
+  </table>
+  <div id="exportStatus" class="export-status"></div>
+  <details class="coord-fold" style="margin-top:14px">
+    <summary>坐标导出 / 导入(高级)</summary>
+    <div class="seg-head">
+      <button id="exportCoordBtn">导出JSON</button>
+      <button id="exportCSVBtn">导出CSV</button>
+      <button id="importCoordBtn">导入坐标</button>
+      <button id="clearSegsBtn" class="btn-danger">清空片段</button>
+      <input type="file" id="coordFile" accept=".json,.txt,application/json,text/plain" style="display:none">
+    </div>
+    <textarea id="coordXfer" rows="3" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;background:#10141f;color:#d7dee8;border:1px solid rgba(255,255,255,0.18);border-radius:6px;padding:8px" placeholder="坐标格式: 每行一段 JSON; 导出存成文件, 导入读文件恢复(导入前会预览确认)"></textarea>
+  </details>
+</div>
+
+<div class="fs-modal" id="fsModal">
+  <div class="fs-box">
+    <div class="fs-head">
+      <button id="fsUp" title="上级目录">↑ 上级</button>
+      <input id="fsPath" value="" spellcheck="false">
+      <button id="fsGo">转到</button>
+      <button id="fsPickDir" style="display:none">✓ 选定此目录</button>
+      <button id="fsClose">✕</button>
+    </div>
+    <div class="fs-body" id="fsList"></div>
+  </div>
+</div>
+
+<div class="set-modal" id="setModal">
+  <div class="set-box">
+    <div class="set-head">
+      <h3>快捷键设置</h3>
+      <button id="setReset">恢复默认</button>
+      <button id="setClose">✕</button>
+    </div>
+    <div class="set-body" id="setBody"></div>
+    <div class="set-tip">点「录制」后按下新按键(可带 Ctrl/Shift/Alt); Esc 取消录制</div>
+  </div>
+</div>
+
+<div class="toast" id="toast" style="display:none"></div>
+<div class="seg-menu" id="segMenu" style="display:none">
+  <div class="seg-menu-item" data-act="copy">复制片段</div>
+  <div class="seg-menu-item" data-act="clear">清空时间</div>
+  <div class="seg-menu-item" data-act="top">置顶</div>
+  <div class="seg-menu-item danger" data-act="del">删除</div>
+</div>
+<script>
+  var vid = document.getElementById("video");
+  var sel = document.getElementById("sel");
+  var preview = document.getElementById("preview");
+  var coord = document.getElementById("coord");
+  var selRect = null;   // {x0,y0,x1,y1} 在 960x540 视口
+
+  var imported = null;   // 当前导入的视频绝对路径
+  function currentVideoInput() {
+    return imported || "";
+  }
+  function baseName(p) { p = String(p || ""); return p.split(/[\\/]/).pop() || p; }
+  function loadVideo() {
+    if (imported) {
+      vid.src = "/api/stream?path=" + encodeURIComponent(imported);
+    } else {
+      /* 空白态 */
+      vid.removeAttribute("src");
+      try { vid.load(); } catch (e) {}
+      document.getElementById("durLabel").textContent = "未加载视频 — 请「导入视频/文件夹」";
+      updateImportBtn();
+      updateVideoState();
+      var eo = document.getElementById("emptyOverlay"); if (eo) eo.style.display = "flex";
+      preview.removeAttribute("src");
+      if (coord) coord.textContent = "—";
+      return;
+    }
+    vid.load();
+    /* 通用视频裁剪工具: 直接显示文件名, 不分内外 */
+    document.getElementById("durLabel").textContent = baseName(imported);
+    updateImportBtn();
+    updateVideoState();
+    var eo = document.getElementById("emptyOverlay"); if (eo) eo.style.display = "none";
+    /* 换视频清掉旧预览帧: 否则右侧预览框还显示上一个视频的画面 */
+    preview.removeAttribute("src");
+    if (coord) coord.textContent = "—";
+  }
+  function updateImportBtn() {
+    var b = document.getElementById("unimportBtn");
+    if (!b) return;
+    if (imported) { b.style.display = ""; b.disabled = false; b.textContent = "取消导入"; }
+    else { b.style.display = "none"; }   // 空白态不显示
+  }
+  vid.addEventListener("loadedmetadata", function () {
+    var m = Math.floor(vid.duration / 60), s = Math.floor(vid.duration % 60);
+    var base = imported ? baseName(imported) + "  ·  " : "";
+    document.getElementById("durLabel").textContent = base + "总长 " + m + ":" + (s < 10 ? "0" + s : s);
+    var tl = document.getElementById("timeline");
+    if (isFinite(vid.duration) && vid.duration > 0) tl.max = vid.duration;
+    tl.value = 0;
+  });
+  vid.addEventListener("error", function () {
+    if (!vid.getAttribute("src")) return;
+    alert("视频文件无效或无法播放, 请检查文件格式");
+  });
+  /* 2026-08-11 时间轴拖动 seek + 步进微调 + 裁剪预览随时间实时更新 */
+  var tl = document.getElementById("timeline");
+  var tlDrag = false;
+  var pvLast = 0;
+  tl.addEventListener("pointerdown", function () { tlDrag = true; });
+  window.addEventListener("pointerup", function () { tlDrag = false; });
+  tl.addEventListener("input", function () {
+    var t = parseFloat(tl.value);
+    if (isFinite(t)) {
+      var snapD = isFinite(vid.duration) ? vid.duration * 0.004 : 0.5;
+      var best = t, bd = snapD;
+      (segments || []).forEach(function (s) {
+        [s.start, s.end].forEach(function (p) {
+          if (p === undefined) return;
+          var d = Math.abs(t - p);
+          if (d < bd) { bd = d; best = p; }
+        });
+      });
+      t = best;
+    }
+    seekTo(t, false);
+  });
+  document.querySelectorAll(".step").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var d = parseFloat(btn.dataset.d);
+      var t = (vid.currentTime || 0) + d;
+      var max = isFinite(vid.duration) ? vid.duration : Math.max(0, t);
+      seekTo(Math.max(0, Math.min(t, max)), false);
+    });
+  });
+  vid.addEventListener("timeupdate", function () {
+    var now = Date.now();
+    /* 时间轴同步(拖动时不覆盖) */
+    if (!tlDrag && tl) tl.value = vid.currentTime;
+    /* 裁剪预览随时间更新(节流 ~10fps, 否则播放时预览不动) */
+    if (selRect && vid.videoWidth && now - pvLast >= 100) {
+      pvLast = now;
+      updatePreview();
+    }
+    /* 不自动覆盖输入框(避免用户输入被播放时间冲掉); 只更新帧显示 */
+    document.getElementById("durLabel").textContent = "当前 " + vid.currentTime.toFixed(1) + "s / 总长 " + (isFinite(vid.duration) ? vid.duration.toFixed(1) + "s" : "?");
+    /* 时间码 */
+    var tc = document.getElementById("tlTime");
+    if (tc) tc.textContent = fmtTc(vid.currentTime) + (isFinite(vid.duration) ? " / " + fmtTc(vid.duration) : "");
+  });
+  /* 2026-08-11 修复: 统一 seek 逻辑(跳转/重播共用), 等元数据、容错时长未知、seek 异步重试 */
+  var seekTo = function (t, autoplay) {
+    vid.pause();
+    document.getElementById("playBtn").textContent = "播放";
+    var tries = 0;
+    var doSeek = function () {
+      if (vid.readyState < 1) {
+        /* 元数据未就绪: 等待(最多 10s) */
+        if (++tries < 100) setTimeout(doSeek, 100);
+        else alert("视频加载失败, 请确认文件存在/编码支持");
+        return;
+      }
+      tries = 0;   // 元数据已就绪, 计数清零开始 seek 阶段
+      var target = t;
+      if (isFinite(vid.duration) && vid.duration > 0) target = Math.min(t, vid.duration - 0.05);
+      target = Math.max(0, target);
+      var settled = false;
+      var finish = function (ok) {
+        if (settled) return; settled = true;
+        if (ok && autoplay) {
+          var pp = vid.play();
+          if (pp && pp.catch) pp.catch(function () {});
+          document.getElementById("playBtn").textContent = "暂停";
+        }
+      };
+      var onSeeked = function () { vid.removeEventListener("seeked", onSeeked); finish(true); };
+      vid.addEventListener("seeked", onSeeked);
+      try {
+        vid.currentTime = target;
+        /* currentTime 属性通常立即反映目标值 → 直接算成功 */
+        if (Math.abs(vid.currentTime - target) < 0.4) { vid.removeEventListener("seeked", onSeeked); finish(true); return; }
+      } catch (e) {
+        vid.removeEventListener("seeked", onSeeked);
+        if (++tries < 20) { setTimeout(doSeek, 100); return; }   // 瞬时不可 seek 先重试
+        alert("视频暂不可跳转, 请稍后再试");
+        return;
+      }
+      /* seeked 兜底: 暂停态/已缓冲可能不触发 seeked → 等 2s 收尾, 不再误报"不可跳转" */
+      setTimeout(function () { vid.removeEventListener("seeked", onSeeked); finish(true); }, 2000);
+    };
+    doSeek();
+  };
+  document.getElementById("playBtn").onclick = function () {
+    if (vid.ended) { seekTo(0, true); return; }   // 播完后点击 = 重播
+    if (vid.paused) { vid.play(); this.textContent = "暂停"; }
+    else { vid.pause(); this.textContent = "播放"; }
+  };
+  document.getElementById("replayBtn").onclick = function () { seekTo(0, true); };
+  vid.addEventListener("ended", function () { document.getElementById("playBtn").textContent = "播放"; });
+    /* === 2026-08-11 快捷键: 可自定义绑定(设置面板) + 统一设置(文件 /api/settings) === */
+  var KEY_DEFAULTS = {
+    playPause: { key: "Space", mods: [] },
+    back01: { key: "ArrowLeft", mods: [] },
+    fwd01: { key: "ArrowRight", mods: [] },
+    back05: { key: "ArrowLeft", mods: ["Shift"] },
+    fwd05: { key: "ArrowRight", mods: ["Shift"] },
+    back1: { key: "ArrowLeft", mods: ["Ctrl"] },
+    fwd1: { key: "ArrowRight", mods: ["Ctrl"] },
+    replay: { key: "r", mods: [] },
+    import: { key: "", mods: [] }, unimport: { key: "", mods: [] }, full: { key: "", mods: [] },
+    clearSel: { key: "", mods: [] }, goto: { key: "", mods: [] }, speed: { key: "", mods: [] },
+    addSeg: { key: "", mods: [] }, setStart: { key: "", mods: [] }, setEnd: { key: "", mods: [] },
+    setCrop: { key: "", mods: [] }, export: { key: "", mods: [] }, cancelExport: { key: "", mods: [] },
+    undo: { key: "z", mods: ["Ctrl"] }, redo: { key: "y", mods: ["Ctrl"] }
+  };
+  var KEY_LABELS = {
+    playPause: "播放 / 暂停", back01: "后退 0.1s", fwd01: "前进 0.1s", back05: "后退 0.5s", fwd05: "前进 0.5s",
+    back1: "后退 1s", fwd1: "前进 1s", replay: "重播",
+    import: "导入视频/文件夹", unimport: "取消导入", full: "全屏选区", clearSel: "清除选区", goto: "跳转到输入时间",
+    speed: "倍速循环", addSeg: "①创建空白片段", setStart: "②设为起始", setEnd: "③设为结束", setCrop: "④导入当前坐标",
+    export: "导出勾选片段", cancelExport: "取消导出", undo: "撤销 Ctrl+Z", redo: "重做 Ctrl+Y"
+  };
+  var K = {};
+  var SET = { exportDir: "", codec: "h264", fmt: "mp4", quality: "medium" };
+  var exportDir = "";
+  function saveAll() {
+    var payload = {
+      exportDir: exportDir || SET.exportDir,
+      codec: document.getElementById("codecSel").value,
+      fmt: document.getElementById("fmtSel").value,
+      quality: document.getElementById("qSel").value,
+      keys: K
+    };
+    try { fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch (e2) {}
+    try {
+      localStorage.setItem("cropExportDir", payload.exportDir);
+      localStorage.setItem("cropFmtCfg", JSON.stringify({ codec: payload.codec, fmt: payload.fmt, quality: payload.quality }));
+      localStorage.setItem("cropKeys", JSON.stringify(payload.keys));
+    } catch (e3) {}
+  }
+  function applySet(d) {
+    if (!d) return;
+    if (d.exportDir !== undefined) SET.exportDir = d.exportDir;
+    if (d.codec) SET.codec = d.codec;
+    if (d.fmt) SET.fmt = d.fmt;
+    if (d.quality) SET.quality = d.quality;
+    if (d.keys) { K = d.keys; for (var a in KEY_DEFAULTS) if (!K[a]) K[a] = KEY_DEFAULTS[a]; }
+    exportDir = SET.exportDir;
+    var ei = document.getElementById("exportDirInput"); if (ei) ei.value = SET.exportDir;
+    var cs = document.getElementById("codecSel"); if (cs) cs.value = SET.codec;
+    var fs = document.getElementById("fmtSel"); if (fs) fs.value = SET.fmt;
+    var qs = document.getElementById("qSel"); if (qs) qs.value = SET.quality;
+    var fd = document.getElementById("fmtDefaultChk"); if (fd) fd.checked = true;
+  }
+  function loadLocalFallback() {
+    try { SET.exportDir = localStorage.getItem("cropExportDir") || ""; } catch (e) {}
+    try { var v = JSON.parse(localStorage.getItem("cropFmtCfg") || "null"); if (v) { SET.codec = v.codec || SET.codec; SET.fmt = v.fmt || SET.fmt; SET.quality = v.quality || SET.quality; } } catch (e) {}
+    try { var k = JSON.parse(localStorage.getItem("cropKeys") || "null"); if (k) K = k; } catch (e) {}
+    for (var a in KEY_DEFAULTS) if (!K[a]) K[a] = KEY_DEFAULTS[a];
+  }
+  function finalizeExportDir() {
+    if (!SET.exportDir) {
+      fetch("/api/downloads").then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.downloads) { SET.exportDir = d.downloads; exportDir = d.downloads; var ei = document.getElementById("exportDirInput"); if (ei) ei.value = d.downloads; }
+      }).catch(function () {});
+    } else {
+      exportDir = SET.exportDir;
+      var ei = document.getElementById("exportDirInput"); if (ei) ei.value = SET.exportDir;
+    }
+  }
+  function loadSettings() {
+    fetch("/api/settings").then(function (r) { return r.json(); }).then(function (d) {
+      if (d && (d.exportDir || d.keys || d.codec)) applySet(d);
+      else { loadLocalFallback(); applySet(SET); }
+      finalizeExportDir();
+    }).catch(function () { loadLocalFallback(); applySet(SET); finalizeExportDir(); });
+  }
+  function keyLabel(b) {
+    if (!b || !b.key) return "(未绑定)";
+    var m = (b.mods || []).join("+");
+    var k = { "Space": "空格", "ArrowLeft": "←", "ArrowRight": "→", "ArrowUp": "↑", "ArrowDown": "↓" }[b.key] || b.key;
+    return m ? m + "+" + k : k;
+  }
+  function matchKey(e, b) {
+    if (!b || !b.key) return false;
+    var keyOk = (e.key === b.key) || (e.code === b.key);
+    if (!keyOk) return false;
+    var need = (b.mods || []).slice().sort().join(",");
+    var have = [];
+    if (e.ctrlKey) have.push("Ctrl");
+    if (e.shiftKey) have.push("Shift");
+    if (e.altKey) have.push("Alt");
+    return need === have.sort().join(",");
+  }
+  function doStep(step) {
+    var t = (vid.currentTime || 0) + step;
+    var max = isFinite(vid.duration) ? vid.duration : Math.max(0, t);
+    seekTo(Math.max(0, Math.min(t, max)), false);
+  }
+  var ACTION_CLICK = {
+    import: "importBtn", unimport: "unimportBtn", full: "fullBtn", clearSel: "clearBtn",
+    goto: "gotoBtn", speed: "speedBtn", addSeg: "newSegBtn", setStart: "setStartBtn",
+    setEnd: "setEndBtn", setCrop: "setCropBtn", export: "exportBtn", cancelExport: "cancelExportBtn"
+  };
+  /* 设置面板 */
+  var recording = null;
+  function renderSet() {
+    var h = '';
+    for (var a in KEY_LABELS) {
+      var b = K[a];
+      h += '<div class="set-row' + (recording === a ? ' rec' : '') + '">' +
+        '<span class="set-lbl">' + KEY_LABELS[a] + '</span>' +
+        '<span class="set-key">' + keyLabel(b) + '</span>' +
+        '<button class="mini rec-btn" data-act="' + a + '">' + (recording === a ? '按任意键…' : '录制') + '</button>' +
+        '</div>';
+    }
+    document.getElementById("setBody").innerHTML = h;
+  }
+  document.getElementById("setBody").addEventListener("click", function (e) {
+    var btn = e.target.closest(".rec-btn"); if (!btn) return;
+    recording = btn.dataset.act;
+    renderSet();
+  });
+  document.getElementById("setBtn").onclick = function () { document.getElementById("setModal").style.display = "flex"; renderSet(); };
+  document.getElementById("setClose").onclick = function () { recording = null; document.getElementById("setModal").style.display = "none"; };
+  document.getElementById("setReset").onclick = function () {
+    K = JSON.parse(JSON.stringify(KEY_DEFAULTS));
+    saveAll();
+    renderSet();
+  };
+  loadSettings();
+  document.addEventListener("keydown", function (e) {
+    var tag = e.target && e.target.tagName;
+    var inField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    if (recording) {
+      if (e.key === "Escape" || e.key === "Enter") { recording = null; renderSet(); return; }
+      if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") return;
+      var mods = [];
+      if (e.ctrlKey) mods.push("Ctrl");
+      if (e.shiftKey) mods.push("Shift");
+      if (e.altKey) mods.push("Alt");
+      var key = e.key === " " ? "Space" : e.key;
+      for (var a in K) {
+        if (a !== recording && matchKey({ key: key, code: key, ctrlKey: mods.indexOf("Ctrl") >= 0, shiftKey: mods.indexOf("Shift") >= 0, altKey: mods.indexOf("Alt") >= 0 }, K[a])) {
+          alert("该按键已被「" + KEY_LABELS[a] + "」占用");
+          recording = null; renderSet(); return;
+        }
+      }
+      K[recording] = { key: key, mods: mods };
+      saveAll();
+      recording = null;
+      renderSet();
+      e.preventDefault();
+      return;
+    }
+    if (inField) return;
+    if (matchKey(e, K.undo)) { e.preventDefault(); undo(); return; }
+    if (matchKey(e, K.redo)) { e.preventDefault(); redo(); return; }
+    if (matchKey(e, K.playPause)) { e.preventDefault(); document.getElementById("playBtn").click(); return; }
+    if (matchKey(e, K.replay)) { e.preventDefault(); seekTo(0, true); return; }
+    var m = { back01: -0.1, fwd01: 0.1, back05: -0.5, fwd05: 0.5, back1: -1, fwd1: 1 };
+    for (var a in m) { if (matchKey(e, K[a])) { e.preventDefault(); doStep(m[a]); return; } }
+    for (var a in ACTION_CLICK) {
+      if (matchKey(e, K[a])) { e.preventDefault(); document.getElementById(ACTION_CLICK[a]).click(); return; }
+    }
+  });
+var vrate = 1;
+  var speedBtn = document.getElementById("speedBtn");
+  speedBtn.onclick = function () {
+    vrate = vrate >= 16 ? 1 : vrate * 2;
+    speedBtn.textContent = "倍速 ×" + vrate;
+    vid.playbackRate = vrate;
+  };
+  document.getElementById("gotoBtn").onclick = doGoto;
+  document.getElementById("frameInput").addEventListener("keydown", function (e) { if (e.key === "Enter") doGoto(); });
+  function doGoto() {
+    var t = parseFloat(document.getElementById("frameInput").value);
+    if (isNaN(t) || t < 0) { alert("请输入有效的秒数"); return; }
+    seekTo(t, false);
+  }
+
+  // 框选
+  var drag = null;
+  var stage = document.querySelector(".stage");
+  function pos(e) {
+    var r = stage.getBoundingClientRect();
+    return { x: (e.clientX - r.left), y: (e.clientY - r.top) };
+  }
+  stage.addEventListener("mousedown", function (e) {
+    if (e.altKey) return;   // Alt = 平移缩放画面
+    var p = pos(e); drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+  });
+  document.addEventListener("mousemove", function (e) {
+    if (!drag) return;
+    var p = pos(e);
+    var rx = Math.max(0, Math.min(960, p.x));
+    var ry = Math.max(0, Math.min(540, p.y));
+    var ratioSel = document.getElementById("ratioSel");
+    if (ratioSel && ratioSel.value !== "free") {
+      var parts = ratioSel.value.split(":");
+      var r = parseFloat(parts[0]) / parseFloat(parts[1]);
+      var dx = rx - drag.x0, dy = ry - drag.y0;
+      var ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ay * r > ax) { ax = ay * r; } else { ay = ax / r; }
+      drag.x1 = Math.max(0, Math.min(960, drag.x0 + (dx >= 0 ? ax : -ax)));
+      drag.y1 = Math.max(0, Math.min(540, drag.y0 + (dy >= 0 ? ay : -ay)));
+    } else {
+      drag.x1 = rx;
+      drag.y1 = ry;
+    }
+    renderSel();
+  });
+  document.addEventListener("mouseup", function () {
+    if (drag) {
+      selRect = normRect(drag);
+      drag = null;
+      renderSel();
+      updatePreview();
+    }
+  });
+  function normRect(r) {
+    var x0 = Math.min(r.x0, r.x1), x1 = Math.max(r.x0, r.x1);
+    var y0 = Math.min(r.y0, r.y1), y1 = Math.max(r.y0, r.y1);
+    return { x0: x0, y0: y0, x1: x1, y1: y1 };
+  }
+  function renderSel() {
+    var mask = document.getElementById("selmask");
+    if (window.__maskLogged === undefined && selRect) {
+      window.__maskLogged = 1;
+      try { console.log("[视频裁剪工具] v4(2026-08-11) 已加载: 遮罩/折叠/分组/三层底色已启用. 若看不到说明是旧缓存, 请 Ctrl+F5 强制刷新."); } catch (e) {}
+    }
+    var sc = document.getElementById("selcoords");
+    if (!selRect) {
+      sel.style.display = "none";
+      if (mask) mask.style.display = "none";
+      if (sc) sc.style.display = "none";
+      updateWarn();
+      return;
+    }
+    var x0 = selRect.x0, y0 = selRect.y0, x1 = selRect.x1, y1 = selRect.y1;
+    sel.style.display = "block";
+    sel.style.left = x0 + "px";
+    sel.style.top = y0 + "px";
+    sel.style.width = (x1 - x0) + "px";
+    sel.style.height = (y1 - y0) + "px";
+    if (mask) {
+      mask.style.display = "block";
+      var mk = mask.children;
+      mk[0].style.cssText = "top:0;left:0;height:" + y0 + "px;width:960px;";
+      mk[1].style.cssText = "top:" + y1 + "px;left:0;height:" + (540 - y1) + "px;width:960px;";
+      mk[2].style.cssText = "top:" + y0 + "px;left:0;height:" + (y1 - y0) + "px;width:" + x0 + "px;";
+      mk[3].style.cssText = "top:" + y0 + "px;left:" + x1 + "px;height:" + (y1 - y0) + "px;width:" + (960 - x1) + "px;";
+    }
+    var w = Math.round((x1 - x0) * 2), h = Math.round((y1 - y0) * 2);
+    if (sc) {
+      sc.textContent = w + "×" + h + " (" + Math.round(x0 * 2) + "," + Math.round(y0 * 2) + ")";
+      sc.style.display = "block";
+      sc.style.left = x0 + "px";
+      sc.style.top = (y0 > 18 ? y0 - 18 : y0 + 4) + "px";
+    }
+    updateWarn();
+    syncXYWH();
+  }
+  function updateWarn() {
+    var w = document.getElementById("selWarn");
+    if (!w) return;
+    var msg = "";
+    if (selRect) {
+      var wpx = (selRect.x1 - selRect.x0) * 2, hpx = (selRect.y1 - selRect.y0) * 2;
+      if (wpx < 40 || hpx < 40) msg = "⚠ 选区过小(" + Math.round(wpx) + "×" + Math.round(hpx) + "px), 导出可能模糊";
+      else if (selRect.x0 < 0 || selRect.y0 < 0 || selRect.x1 > 960 || selRect.y1 > 540) msg = "⚠ 选区超出画面边界, 请调整";
+    }
+    w.textContent = msg;
+    w.style.display = msg ? "block" : "none";
+  }
+  function toOrig(r) {
+    // 960x540 视口 → 1920x1080 原图
+    return { x0: Math.round(r.x0 * 2), y0: Math.round(r.y0 * 2), x1: Math.round(r.x1 * 2), y1: Math.round(r.y1 * 2) };
+  }
+  function updatePreview() {
+    if (!vid.videoWidth) return;
+    var cv = document.createElement("canvas");
+    var cx = cv.getContext("2d");
+    if (compareMode) {
+      /* 原图对比: 显示整帧 */
+      cv.width = 1920; cv.height = 1080;
+      cx.drawImage(vid, 0, 0, 1920, 1080);
+      preview.src = cv.toDataURL("image/jpeg", 0.8);
+      coord.textContent = "原图对比(1920×1080)";
+      return;
+    }
+    if (!selRect) return;
+    var o = toOrig(selRect);
+    cv.width = o.x1 - o.x0; cv.height = o.y1 - o.y0;
+    cx.drawImage(vid, o.x0, o.y0, cv.width, cv.height, 0, 0, cv.width, cv.height);
+    preview.src = cv.toDataURL("image/jpeg", 0.8);
+    coord.textContent = "坐标(1920x1080原图):\n  (" + o.x0 + ", " + o.y0 + ", " + o.x1 + ", " + o.y1 + ")\n  宽" + cv.width + " 高" + cv.height;
+  }
+  document.getElementById("clearBtn").onclick = function () { selRect = null; renderSel(); coord.textContent = "—"; preview.removeAttribute("src"); };
+  /* 2026-08-11 全屏: 选区重置为整幅 1920×1080(视口 960×540) */
+  document.getElementById("fullBtn").onclick = function () {
+    selRect = { x0: 0, y0: 0, x1: 960, y1: 540 };
+    renderSel();
+    updatePreview();
+  };
+  // 右击复制
+  stage.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    if (selRect) {
+      var o = toOrig(selRect);
+      var txt = o.x0 + "," + o.y0 + "," + o.x1 + "," + o.y1;
+      if (navigator.clipboard) navigator.clipboard.writeText(txt);
+      coord.textContent = "已复制: " + txt;
+    }
+  });
+  vid.addEventListener("seeked", updatePreview);
+
+  /* 2026-08-11 默认空白: 不自动加载视频, 由用户手动导入 */
+  loadVideo();
+
+  /* === 2026-08-11 导入/导出: 扫描视频 + 时间表 + ffmpeg 裁剪 === */
+  var segments = [];
+  var segTbody = document.getElementById("segTbody");
+  var exportStatus = document.getElementById("exportStatus");
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  /* === 2026-08-11 导入视频/文件夹: 服务器文件浏览弹窗(/api/fs + /api/stream) === */
+  var fsModal = document.getElementById("fsModal");
+  var fsList = document.getElementById("fsList");
+  var fsPath = document.getElementById("fsPath");
+  var fsCur = null;
+  var fsMode = "video";   // video=导入视频; dir=选导出目录
+  var fsPickBtn = document.getElementById("fsPickDir");
+  function fsOpen() {
+    fsMode = "video";
+    fsPickBtn.style.display = "none";
+    fsModal.style.display = "flex";
+    fsGoTo("");
+  }
+  function fsOpenDir() {
+    fsMode = "dir";
+    fsPickBtn.style.display = "";
+    fsModal.style.display = "flex";
+    fsGoTo(exportDir || "");
+  }
+  function loadDrives() {
+    fetch("/api/drives").then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.drives) window.__drives = d.drives;
+    }).catch(function () { window.__drives = []; });
+  }
+  loadDrives();
+  function fsGoTo(p) {
+    fsList.innerHTML = '<div style="padding:10px;color:#8a94a8">加载中...</div>';
+    var url = "/api/fs" + (p ? "?path=" + encodeURIComponent(p) : "");
+    fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || !d.ok) { fsList.innerHTML = '<div class="err">' + esc(d && d.error || "加载失败") + '</div>'; return; }
+      fsCur = d.dir;
+      fsPath.value = d.dir;
+      var h = '';
+      /* 2026-08-11 盘符切换: 顶部固定显示所有盘, 解决只能进 C 盘 */
+      h += '<div class="fs-drives">';
+      (window.__drives || []).forEach(function (dr) {
+        h += '<span class="fs-drive" data-dir="' + esc(dr) + '">' + esc(dr) + '</span>';
+      });
+      h += '</div>';
+      if (d.parent) h += '<div class="fs-row dir" data-dir="' + esc(d.parent) + '"><span class="fs-ico">↩</span>.. 上级</div>';
+      (d.entries || []).forEach(function (e) {
+        if (e.dir) {
+          h += '<div class="fs-row dir" data-dir="' + esc(e.path) + '"><span class="fs-ico">📁</span>' + esc(e.name) + '</div>';
+        } else if (/\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(e.name)) {
+          h += '<div class="fs-row video" data-video="' + esc(e.path) + '"><span class="fs-ico">▶</span>' + esc(e.name) + '</div>';
+        }
+      });
+      if (!h.replace(/<div class="fs-drives">.*?<\/div>/, "").trim() && !(d.entries || []).length) {
+        h += '<div style="padding:10px;color:#5d6a80">(空目录)</div>';
+      }
+      fsList.innerHTML = h;
+    }).catch(function (e2) { fsList.innerHTML = '<div class="err">' + esc(String(e2)) + '</div>'; });
+  }
+  fsList.addEventListener("click", function (e) {
+    var drive = e.target.closest(".fs-drive");
+    if (drive && drive.dataset.dir) { fsGoTo(drive.dataset.dir); return; }
+    var row = e.target.closest(".fs-row"); if (!row) return;
+    if (row.dataset.dir) { fsGoTo(row.dataset.dir); }
+    else if (row.dataset.video) {
+      if (fsMode === "dir") return;
+      addVideo(row.dataset.video);
+      fsModal.style.display = "none";
+    }
+  });
+  fsList.addEventListener("dblclick", function (e) {
+    var row = e.target.closest(".fs-row"); if (!row || !row.dataset.dir) return;
+    fsGoTo(row.dataset.dir);
+  });
+  document.getElementById("fsUp").onclick = function () {
+    if (fsCur) {
+      var parent = fsCur.replace(/[\\/]+$/, "");
+      parent = parent.replace(/[\\/][^\\/]*$/, "");
+      if (!parent) parent = fsCur;
+      fsGoTo(parent);
+    }
+  };
+  document.getElementById("fsGo").onclick = function () { fsGoTo(fsPath.value); };
+  document.getElementById("fsClose").onclick = function () { fsModal.style.display = "none"; };
+  fsPath.addEventListener("keydown", function (e) { if (e.key === "Enter") fsGoTo(fsPath.value); });
+  document.getElementById("importBtn").onclick = fsOpen;
+  /* === 2026-08-11 已导入视频下拉: 多导入, 下拉切换 === */
+  var videoList = [];   // [{path, name}]
+  function addVideo(path) {
+    var hit = false;
+    for (var i = 0; i < videoList.length; i++) if (videoList[i].path === path) { hit = true; break; }
+    if (!hit) videoList.push({ path: path, name: baseName(path) });
+    imported = path;
+    loadVideo();
+    renderVL();
+  }
+  function renderVL() {
+    var sel = document.getElementById("vlSel");
+    var h = '<option value="">— 未加载视频 —</option>';
+    for (var i = 0; i < videoList.length; i++) {
+      h += '<option value="' + esc(videoList[i].path) + '">' + esc(videoList[i].name) + '</option>';
+    }
+    sel.innerHTML = h;
+    sel.value = imported || "";
+  }
+  document.getElementById("vlSel").onchange = function () {
+    var v = this.value;
+    imported = v ? v : null;
+    loadVideo();
+  };
+  document.getElementById("unimportBtn").onclick = function () {
+    if (imported) {
+      for (var i = 0; i < videoList.length; i++) {
+        if (videoList[i].path === imported) { videoList.splice(i, 1); break; }
+      }
+    }
+    imported = videoList.length ? videoList[0].path : null;   // 移除当前 → 切到下一个/空白
+    loadVideo();
+    renderVL();
+  };
+
+  /* 导出位置 / 编码/格式/画质: 已由 loadSettings 统一从文件加载, 这里只接保存触发器 */
+  document.getElementById("browseDirBtn").onclick = fsOpenDir;
+  document.getElementById("fmtDefaultChk").onchange = function () { saveAll(); };
+  ["codecSel", "fmtSel", "qSel"].forEach(function (id) {
+    document.getElementById(id).onchange = function () {
+      if (document.getElementById("fmtDefaultChk").checked) saveAll();
+    };
+  });
+  document.getElementById("fsPickDir").onclick = function () {
+    if (fsCur) {
+      exportDir = fsCur;
+      SET.exportDir = fsCur;
+      document.getElementById("exportDirInput").value = exportDir;
+      if (document.getElementById("dirDefaultChk").checked) saveAll();
+      fsModal.style.display = "none";
+    }
+  };
+  document.getElementById("dirDefaultChk").onchange = function () {
+    if (this.checked && exportDir) saveAll();
+  };
+
+  /* === 2026-08-11 坐标导出/导入: 导出存文件, 导入读文件(无效文件提示) === */
+  function parseCoords(txt) {
+    var ok = 0, bad = 0, items = [];
+    String(txt).split(/\r?\n/).forEach(function (line) {
+      line = line.trim();
+      if (!line || line.charAt(0) === "#" || (line.indexOf("name,start,end") >= 0 && line.indexOf("x0,y0") >= 0)) return;
+      try {
+        /* JSON 行 */
+        var s = JSON.parse(line);
+        if (s && typeof s.start === "number" && typeof s.end === "number" && Array.isArray(s.crop)) {
+          if (!s.input) s.input = currentVideoInput();
+          if (s.enabled === undefined) s.enabled = true;
+          items.push(s); ok++;
+        } else bad++;
+      } catch (e) {
+        /* CSV 行: name,start,end,x0,y0,x1,y1,input */
+        var cols = line.split(",");
+        if (cols.length >= 6) {
+          var st = parseFloat(cols[1]), en = parseFloat(cols[2]);
+          var x0 = parseFloat(cols[3]), y0 = parseFloat(cols[4]), x1 = parseFloat(cols[5]), y1 = parseFloat(cols[6]);
+          if (isFinite(st) && isFinite(en) && en > st && isFinite(x0) && isFinite(y0) && isFinite(x1) && isFinite(y1)) {
+            var input = cols.length > 7 ? cols.slice(7).join(",") : currentVideoInput();
+            items.push({ input: input, name: cols[0] || "片段", start: st, end: en, crop: [x0, y0, x1, y1], enabled: true });
+            ok++;
+          } else bad++;
+        } else bad++;
+      }
+    });
+    return { ok: ok, bad: bad, items: items };
+  }
+  document.getElementById("exportCoordBtn").onclick = function () {
+    if (!segments.length) { alert("没有片段可导出"); return; }
+    var content = segments.map(function (s) { return JSON.stringify(s); }).join("\n");
+    document.getElementById("coordXfer").value = content;
+    /* 存成文件供下次导入 */
+    var d = new Date(), pad = function (n) { return n < 10 ? "0" + n : n; };
+    var fn = "裁剪坐标_" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "_" + pad(d.getHours()) + pad(d.getMinutes()) + ".json";
+    var blob = new Blob([content], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fn;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    alert("已导出 " + segments.length + " 段坐标到文件: " + fn);
+  };
+  document.getElementById("importCoordBtn").onclick = function () {
+    document.getElementById("coordFile").click();
+  };
+  document.getElementById("coordFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    this.value = "";
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var txt = String(rd.result || "").trim();
+      if (!txt) { alert("文件为空或无法读取"); return; }
+      var r = parseCoords(txt);
+      if (!r.ok && r.bad > 0) { alert("文件无效: 未识别到有效坐标(" + r.bad + " 行无效)"); return; }
+      /* 导入前预览确认, 避免误覆盖 */
+      if (!r.ok) return;
+      if (!confirm("将导入 " + r.ok + " 个片段(追加到现有 " + segments.length + " 条, 可用 Ctrl+Z 撤销)。\n\n" + r.items.slice(0, 8).map(function (s) { return s.name + "  " + s.start + "→" + s.end + "s"; }).join("\n") + (r.items.length > 8 ? "\n…共" + r.items.length + "段" : "") + "\n\n确定导入?")) return;
+      pushHist();
+      r.items.forEach(function (s) { segments.push(s); });
+      renderSegs();
+      document.getElementById("coordXfer").value = txt;
+      toast("已导入 " + r.ok + " 段" + (r.bad ? ", " + r.bad + " 行无效跳过" : ""));
+    };
+    rd.onerror = function () { alert("文件读取失败"); };
+    rd.readAsText(f);
+  });
+  document.getElementById("clearSegsBtn").onclick = function () {
+    if (segments.length && confirm("清空全部片段? 该操作可用 Ctrl+Z 撤销")) { pushHist(); segments = []; renderSegs(); }
+  };
+
+  function currentCrop() {
+    if (!selRect) return [0, 0, 1920, 1080];
+    var o = toOrig(selRect);
+    return [o.x0, o.y0, o.x1, o.y1];
+  }
+  var activeSeg = -1;   // 当前选中的片段(行点击选中)
+  function segRowHtml(s, i) {
+    var ck = s.enabled === false ? "" : "checked";
+    var act = i === activeSeg ? ' class="active"' : "";
+    return '<tr data-i="' + i + '"' + act + ' draggable="true" title="拖动可排序">' +
+      '<td><input type="checkbox" class="on" ' + ck + '></td>' +
+      '<td><input class="name" value="' + esc(s.name) + '"></td>' +
+      '<td><input class="st" type="number" step="0.1" min="0" value="' + s.start + '"></td>' +
+      '<td><input class="en" type="number" step="0.1" min="0" value="' + s.end + '"></td>' +
+      '<td style="font-family:monospace;font-size:12px">' + s.crop.join(",") + ' <button class="mini pick" title="用当前选区更新本行">取选区</button></td>' +
+      '<td><button class="mini del">删除</button> <button class="mini more-btn" title="更多操作">⋯</button></td>' +
+      '</tr>';
+  }
+  function renderSegs() {
+    segTbody.innerHTML = segments.map(segRowHtml).join("");
+    highlightRows();
+    renderMarks();
+  }
+  function highlightRows() {
+    var rows = segTbody.querySelectorAll("tr");
+    for (var r = 0; r < rows.length; r++) {
+      if (+rows[r].dataset.i === activeSeg) rows[r].classList.add("active");
+      else rows[r].classList.remove("active");
+    }
+  }
+  segTbody.addEventListener("click", function (e) {
+    var tr = e.target.closest("tr"); if (!tr) return;
+    var i = +tr.dataset.i;
+    if (e.target.classList.contains("del")) { pushHist(); segments.splice(i, 1); if (activeSeg >= segments.length) activeSeg = -1; renderSegs(); }
+    else if (e.target.classList.contains("pick")) { pushHist(); segments[i].crop = currentCrop(); renderSegs(); }
+    else if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") { return; }   // 不打断编辑/勾选
+    else { activeSeg = i; highlightRows(); }   // 只切高亮, 不重建 DOM(否则勾选状态会被重置)
+  });
+  segTbody.addEventListener("input", function (e) {
+    var tr = e.target.closest("tr"); if (!tr) return;
+    var i = +tr.dataset.i, s = segments[i];
+    if (e.target.classList.contains("name")) s.name = e.target.value;
+    else if (e.target.classList.contains("st")) s.start = parseFloat(e.target.value) || 0;
+    else if (e.target.classList.contains("en")) s.end = parseFloat(e.target.value) || 0;
+  });
+  segTbody.addEventListener("change", function (e) {
+    var tr = e.target.closest("tr"); if (!tr) return;
+    var i = +tr.dataset.i;
+    if (e.target.classList.contains("on")) segments[i].enabled = e.target.checked;
+  });
+  /* 2026-08-11 4 按键流程: 创建空白 → 逐项用当前时间/当前选区填 */
+  var segCounter = 0;
+  document.getElementById("newSegBtn").onclick = function () {
+    pushHist();
+    segCounter++;
+    segments.push({ input: currentVideoInput(), name: "片段" + segCounter, start: 0, end: 0, crop: [0, 0, 1920, 1080], enabled: true });
+    activeSeg = segments.length - 1;
+    renderSegs();
+    var tr = segTbody.querySelector('tr[data-i="' + activeSeg + '"]');
+    if (tr) tr.scrollIntoView({ block: "nearest" });
+  };
+  function needActive() {
+    if (activeSeg < 0 || activeSeg >= segments.length) { alert("请先「①创建空白片段」再点行选中它"); return null; }
+    return segments[activeSeg];
+  }
+  document.getElementById("setStartBtn").onclick = function () {
+    var s = needActive(); if (!s) return;
+    pushHist(); s.start = vid.currentTime || 0;
+    renderSegs();
+  };
+  document.getElementById("setEndBtn").onclick = function () {
+    var s = needActive(); if (!s) return;
+    pushHist(); s.end = vid.currentTime || 0;
+    renderSegs();
+  };
+  document.getElementById("setCropBtn").onclick = function () {
+    var s = needActive(); if (!s) return;
+    pushHist(); s.crop = currentCrop();   // 无选区时默认全图 [0,0,1920,1080]
+    renderSegs();
+  };
+  document.getElementById("exportBtn").onclick = doExport;
+  var exportCancelled = false;
+  var DEFAULT_SPEED = 4;   // 首段未完成时估算用: 每秒编码约处理 4s 视频(实测 ~5.9, 保守取 4)
+  document.getElementById("cancelExportBtn").onclick = function () { exportCancelled = true; };
+  function doExport() {
+    if (!exportDir) {
+      fsOpenDir();
+      alert("请先设置导出位置: 在弹出的目录里进到目标文件夹, 点「✓ 选定此目录」(可勾选「设为默认」下次免选)");
+      return;
+    }
+    var list = segments.filter(function (s) { return s.enabled !== false; });
+    if (!list.length) { alert("没有勾选的片段(勾选要导出的行)"); return; }
+    var audio = document.getElementById("audioChk").checked;
+    var CONCURRENCY = Math.max(1, parseInt(document.getElementById("concSel").value) || 1);
+    var total = 0;
+    list.forEach(function (s) { total += Math.max(0, (s.end || 0) - (s.start || 0)); });
+    exportStatus.innerHTML = '<div id="etaLine">准备导出 ' + list.length + ' 段(合计 ' + total.toFixed(1) + 's, 并行' + CONCURRENCY + ', 输出到: ' + esc(exportDir) + ')...</div><div class="prog"><div class="prog-fill" id="progFill"></div></div><br>';
+    var doneCount = 0, doneDur = 0, t0 = Date.now(), speed = 0, pendingDur = total, pendingCount = list.length;
+    var queue = list.slice(), workers = 0;
+    exportCancelled = false;
+    function setEta(txt) { var e = document.getElementById("etaLine"); if (e) e.innerHTML = txt; }
+    var etaTimer = setInterval(updEta, 1000);
+    function updEta() {
+      if (pendingCount <= 0 || exportCancelled) return;
+      var el = (Date.now() - t0) / 1000;
+      var eff = speed > 0 ? speed : DEFAULT_SPEED;
+      var eta = Math.max(0, Math.round(pendingDur / eff));
+      setEta('导出中: 已完成 ' + doneCount + '/' + list.length + ' 段, 已用 ' + Math.round(el) + 's, 预计还需约 ' + eta + 's' + (speed > 0 ? '' : '(按默认速度估算)'));
+      var pf = document.getElementById("progFill");
+      if (pf) pf.style.width = Math.min(100, (doneDur / total * 100)).toFixed(1) + '%';
+    }
+    function processOne(s) {
+      var nm = esc(autoName(s));
+      var segStart = Date.now();
+      var ord = list.indexOf(s) + 1;
+      exportStatus.innerHTML += '<div>[' + ord + "/" + list.length + "] " + nm + " (" + (s.start || 0) + "→" + (s.end || 0) + "s) 裁剪中...</div>";
+      fetch("/api/crop", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: s.input, start: s.start, end: s.end, crop: s.crop, name: nm, audio: audio, outDir: exportDir,
+          format: document.getElementById("fmtSel").value, quality: s.quality || document.getElementById("qSel").value,
+          codec: document.getElementById("codecSel").value })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        var segEl = (Date.now() - segStart) / 1000;
+        var segDur = Math.max(0, (s.end || 0) - (s.start || 0));
+        doneDur += segDur; pendingDur -= segDur; doneCount++; pendingCount--; speed = doneDur / ((Date.now() - t0) / 1000);
+        if (d.ok) exportStatus.innerHTML += '<div class="ok">✅ 完成(裁' + segDur.toFixed(1) + 's 用' + segEl.toFixed(1) + 's): <a href="' + d.url + '" download>' + esc(d.file) + '</a></div>';
+        else exportStatus.innerHTML += '<div class="err">❌ ' + esc(d.error || "失败") + '</div>';
+        workers--; updEta(); pullNext();
+      }).catch(function (e2) {
+        var segDur = Math.max(0, (s.end || 0) - (s.start || 0));
+        doneDur += segDur; pendingDur -= segDur; doneCount++; pendingCount--; speed = doneDur / ((Date.now() - t0) / 1000);
+        exportStatus.innerHTML += '<div class="err">❌ ' + esc(String(e2)) + '</div>';
+        workers--; updEta(); pullNext();
+      });
+    }
+    function pullNext() {
+      while (workers < CONCURRENCY && queue.length && !exportCancelled) { workers++; processOne(queue.shift()); }
+      if (pendingCount <= 0 || exportCancelled) {
+        clearInterval(etaTimer);
+        if (exportCancelled) setEta('已取消(完成 ' + doneCount + '/' + list.length + ' 段)');
+        else {
+          setEta('全部完成 ✅(共 ' + ((Date.now() - t0) / 1000).toFixed(1) + 's)');
+          toast('导出完成 ' + list.length + ' 段');
+          if (document.getElementById("openFolderChk").checked) {
+            fetch("/api/reveal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: exportDir }) }).catch(function () {});
+          }
+        }
+      }
+    }
+    pullNext();
+    updEta();
+  }
+  /* === 2026-08-11 视觉与交互增强: 预设/禁用态/时间码/时间轴片段色块 === */
+  function updateVideoState() {
+    var has = !!imported;
+    ["playBtn", "replayBtn", "fullBtn", "clearBtn", "gotoBtn", "exportBtn",
+     "newSegBtn", "setStartBtn", "setEndBtn", "setCropBtn"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.disabled = !has;
+    });
+    document.querySelectorAll(".step").forEach(function (b) { b.disabled = !has; });
+    var tl = document.getElementById("timeline");
+    if (tl) tl.disabled = !has;
+  }
+  function fmtTc(t) {
+    if (!isFinite(t) || t < 0) t = 0;
+    var h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s0 = Math.floor(t % 60), ms = Math.round((t % 1) * 1000);
+    if (ms === 1000) { ms = 0; s0++; }
+    var p = function (n, l) { n = String(n); while (n.length < l) n = "0" + n; return n; };
+    return p(h, 2) + ":" + p(m, 2) + ":" + p(s0, 2) + "." + p(ms, 3);
+  }
+  function renderMarks() {
+    var m = document.getElementById("tlMarks");
+    if (!m) return;
+    /* 时长未知时用最大片段结束时间兜底, 保证色块始终显示 */
+    var dur = isFinite(vid.duration) && vid.duration > 0 ? vid.duration : 0;
+    if (!dur) {
+      (segments || []).forEach(function (s) {
+        if (s.end && s.end > dur) dur = s.end;
+      });
+    }
+    if (!dur) { m.innerHTML = ""; return; }
+    var h = "";
+    (segments || []).forEach(function (s, idx) {
+      if (s.enabled === false) return;
+      var st = Math.max(0, s.start || 0), en = Math.max(st, s.end || 0);
+      var l = Math.min(100, st / dur * 100), w = Math.min(100 - l, (en - st) / dur * 100);
+      h += '<div class="tl-seg" data-i="' + idx + '" title="双击跳到该片段" style="left:' + l + '%;width:' + w + '%"><span class="s"></span><span class="e"></span></div>';
+    });
+    m.innerHTML = h;
+  }
+  function setPresetSel(v) {
+    if (v === "full") selRect = { x0: 0, y0: 0, x1: 960, y1: 540 };
+    else if (v === "vs") { var w = 540 * 9 / 16, x0 = (960 - w) / 2; selRect = { x0: x0, y0: 0, x1: x0 + w, y1: 540 }; }
+    else if (v === "cover") { var s = 540, x0 = (960 - s) / 2; selRect = { x0: x0, y0: 0, x1: x0 + s, y1: 540 }; }
+    renderSel();
+    updatePreview();
+  }
+  document.getElementById("presetSel").onchange = function () {
+    var v = this.value; this.value = "";
+    if (v) setPresetSel(v);
+  };
+  renderMarks();
+
+  /* === 2026-08-11 全量增强: 撤销/批量/长按/XYWH/复制粘贴/三分线/命名/CSV/音量/缩放/对比/toast === */
+  var undoStack = [], redoStack = [];
+  function pushHist() {
+    undoStack.push(JSON.stringify(segments));
+    if (undoStack.length > 100) undoStack.shift();
+    redoStack = [];
+  }
+  function undo() {
+    if (!undoStack.length) { toast("没有可撤销的操作", 1); return; }
+    redoStack.push(JSON.stringify(segments));
+    segments = JSON.parse(undoStack.pop());
+    if (activeSeg >= segments.length) activeSeg = -1;
+    renderSegs();
+    toast("已撤销");
+  }
+  function redo() {
+    if (!redoStack.length) { toast("没有可重做的操作", 1); return; }
+    undoStack.push(JSON.stringify(segments));
+    segments = JSON.parse(redoStack.pop());
+    if (activeSeg >= segments.length) activeSeg = -1;
+    renderSegs();
+    toast("已重做");
+  }
+  /* 长按连续步进 */
+  document.querySelectorAll(".step").forEach(function (btn) {
+    var ht = null, hi = null;
+    var stepNow = function () {
+      var d = parseFloat(btn.dataset.d);
+      var t = (vid.currentTime || 0) + d;
+      var max = isFinite(vid.duration) ? vid.duration : Math.max(0, t);
+      seekTo(Math.max(0, Math.min(t, max)), false);
+    };
+    btn.addEventListener("mousedown", function () {
+      ht = setTimeout(function () { hi = setInterval(stepNow, 70); }, 450);
+    });
+    var stopH = function () { clearTimeout(ht); clearInterval(hi); ht = null; hi = null; };
+    btn.addEventListener("mouseup", stopH);
+    btn.addEventListener("mouseleave", stopH);
+    btn.addEventListener("touchstart", function (e) { e.preventDefault(); btn.dispatchEvent(new MouseEvent("mousedown")); }, { passive: false });
+    btn.addEventListener("touchend", stopH);
+  });
+  /* toast */
+  var toastTimer = null;
+  function toast(msg, isErr) {
+    var t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.className = "toast" + (isErr ? " err" : "");
+    t.style.display = "block";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.style.display = "none"; }, 3500);
+  }
+  /* XYWH 数值输入 */
+  function syncXYWH() {
+    var o = selRect ? toOrig(selRect) : null;
+    var ids = { xyX: o ? o.x0 : "", xyY: o ? o.y0 : "", xyW: o ? o.x1 - o.x0 : "", xyH: o ? o.y1 - o.y0 : "" };
+    for (var id in ids) { var el = document.getElementById(id); if (el) el.value = ids[id]; }
+  }
+  function applyXYWH() {
+    var g = function (id) { return parseInt(document.getElementById(id).value) || 0; };
+    var x = g("xyX"), y = g("xyY"), w = g("xyW"), h = g("xyH");
+    if (w <= 0 || h <= 0) return;
+    /* 钳制在画面内(1920×1080 原图 → 960×540 视口) */
+    x = Math.max(0, Math.min(1920 - w, x));
+    y = Math.max(0, Math.min(1080 - h, y));
+    w = Math.max(1, Math.min(1920, w));
+    h = Math.max(1, Math.min(1080, h));
+    selRect = { x0: x / 2, y0: y / 2, x1: (x + w) / 2, y1: (y + h) / 2 };
+    renderSel();
+    updatePreview();
+    syncXYWH();
+  }
+  ["xyX", "xyY", "xyW", "xyH"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", applyXYWH);
+  });
+  /* 复制/粘贴选区 */
+  function copySel() {
+    if (!selRect) { toast("先框选区域", 1); return; }
+    var o = toOrig(selRect);
+    var txt = o.x0 + "," + o.y0 + "," + o.x1 + "," + o.y1;
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function () { toast("已复制选区坐标 " + txt); }).catch(function () { toast("复制失败", 1); });
+    else toast("当前环境不支持剪贴板", 1);
+  }
+  function pasteSel() {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (txt) {
+        var m = String(txt).match(/-?\d+,-?\d+,-?\d+,-?\d+/);
+        if (!m) { toast("剪贴板没有有效坐标", 1); return; }
+        var a = m[0].split(",").map(parseFloat);
+        selRect = { x0: a[0] / 2, y0: a[1] / 2, x1: a[2] / 2, y1: a[3] / 2 };
+        renderSel(); updatePreview();
+        toast("已粘贴选区 " + m[0]);
+      }).catch(function () { toast("无法读取剪贴板", 1); });
+    } else toast("当前环境不支持剪贴板", 1);
+  }
+  /* 三分线 */
+  var thirdsOn = false;
+  function toggleThirds() {
+    thirdsOn = !thirdsOn;
+    var o = document.getElementById("thirdsOverlay");
+    if (o) o.style.display = thirdsOn ? "block" : "none";
+    var b = document.getElementById("thirdsBtn");
+    if (b) b.classList.toggle("active", thirdsOn);
+  }
+  /* 自动命名模板 */
+  function autoName(s) {
+    var tpl = document.getElementById("nameTplChk");
+    if (!tpl || !tpl.checked) return s.name || "clip";
+    var b = baseName(s.input || "").replace(/\.[^.]+$/, "");
+    var c = s.crop || [];
+    return b + "_" + (s.start || 0) + "-" + (s.end || 0) + "_" + (c.length ? c.join("x") : "full");
+  }
+  /* 批量 */
+  document.getElementById("selAllChk").onchange = function () {
+    var v = this.checked;
+    segments.forEach(function (s) { s.enabled = v; });
+    renderSegs();
+  };
+  document.getElementById("batchDelBtn").onclick = function () {
+    var before = segments.length;
+    var keep = segments.filter(function (s) { return s.enabled === false; });
+    if (keep.length === before) { toast("没有勾选要删除的片段", 1); return; }
+    pushHist();
+    segments = keep;
+    if (activeSeg >= segments.length) activeSeg = -1;
+    renderSegs();
+    toast("已删除 " + (before - keep.length) + " 段");
+  };
+  document.getElementById("batchQBtn").onclick = function () {
+    if (!segments.some(function (s) { return s.enabled !== false; })) { toast("没有勾选的片段", 1); return; }
+    pushHist();
+    var q = document.getElementById("qSel").value;
+    segments.forEach(function (s) { if (s.enabled !== false) s.quality = q; });
+    renderSegs();
+    toast("已为勾选片段设置画质: " + q);
+  };
+  /* CSV 导出 */
+  function exportCSV() {
+    if (!segments.length) { toast("没有片段可导出", 1); return; }
+    var lines = ["name,start,end,x0,y0,x1,y1,input"];
+    segments.forEach(function (s) {
+      var c = s.crop || [];
+      lines.push([(s.name || "clip"), s.start, s.end, c[0], c[1], c[2], c[3], s.input || ""].join(","));
+    });
+    var blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "裁剪坐标.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    toast("已导出 CSV(" + segments.length + " 行)");
+  }
+  /* 音量 */
+  var volEl = document.getElementById("volSlider");
+  if (volEl) volEl.oninput = function () { vid.volume = parseInt(this.value) / 100; };
+  /* 画面缩放/平移(滚轮缩放, Alt+拖拽平移) */
+  var zoom = 1, panX = 0, panY = 0, panDrag = null;
+  function applyZoom() {
+    var v = document.getElementById("video");
+    if (!v) return;
+    v.style.transformOrigin = "0 0";
+    v.style.transform = "translate(" + panX + "px," + panY + "px) scale(" + zoom + ")";
+  }
+  stage.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    var f = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    zoom = Math.max(1, Math.min(5, zoom * f));
+    applyZoom();
+  }, { passive: false });
+  stage.addEventListener("mousedown", function (e) {
+    if (e.altKey && zoom > 1) { panDrag = { x: e.clientX - panX, y: e.clientY - panY }; e.stopPropagation(); }
+  });
+  document.addEventListener("mousemove", function (e) {
+    if (panDrag) { panX = e.clientX - panDrag.x; panY = e.clientY - panDrag.y; applyZoom(); }
+  });
+  document.addEventListener("mouseup", function () { panDrag = null; });
+  var zr = document.getElementById("zoomResetBtn");
+  if (zr) zr.onclick = function () { zoom = 1; panX = 0; panY = 0; applyZoom(); };
+  /* 原图对比 */
+  var compareMode = false;
+  var cmpBtn = document.getElementById("cmpBtn");
+  if (cmpBtn) cmpBtn.onclick = function () {
+    compareMode = !compareMode;
+    cmpBtn.classList.toggle("active", compareMode);
+    cmpBtn.textContent = compareMode ? "裁剪" : "原图";
+    updatePreview();
+  };
+  /* 复制/粘贴/三分线按钮绑定 */
+  var cb = document.getElementById("copySelBtn"); if (cb) cb.onclick = copySel;
+  var pb = document.getElementById("pasteSelBtn"); if (pb) pb.onclick = pasteSel;
+  var tb = document.getElementById("thirdsBtn"); if (tb) tb.onclick = toggleThirds;
+  var ecb = document.getElementById("exportCSVBtn"); if (ecb) ecb.onclick = exportCSV;
+
+  /* 快捷键按钮(右侧) */
+  var shortcutBtn = document.getElementById("shortcutBtn");
+  if (shortcutBtn) shortcutBtn.onclick = function () { document.getElementById("setModal").style.display = "flex"; renderSet(); };
+  /* 选区四角控制点拖拽调整 */
+  var resizeDrag = null;
+  var selEl = document.getElementById("sel");
+  selEl.addEventListener("mousedown", function (e) {
+    var h = e.target.closest(".hl");
+    if (!h) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var rect = selRect || { x0: 0, y0: 0, x1: 960, y1: 540 };
+    var cls = h.className;
+    var corner = cls.indexOf("tl") >= 0 ? "tl" : cls.indexOf("tr") >= 0 ? "tr" : cls.indexOf("bl") >= 0 ? "bl" : "br";
+    resizeDrag = { corner: corner, start: pos(e), rect: { x0: rect.x0, y0: rect.y0, x1: rect.x1, y1: rect.y1 } };
+  });
+  document.addEventListener("mousemove", function (e) {
+    if (!resizeDrag) return;
+    var p = pos(e);
+    var dx = p.x - resizeDrag.start.x, dy = p.y - resizeDrag.start.y;
+    var r = resizeDrag.rect, c = resizeDrag.corner;
+    var nx0 = r.x0, ny0 = r.y0, nx1 = r.x1, ny1 = r.y1;
+    if (c.indexOf("l") >= 0) nx0 = Math.max(0, Math.min(r.x1 - 4, r.x0 + dx));
+    if (c.indexOf("r") >= 0) nx1 = Math.min(960, Math.max(r.x0 + 4, r.x1 + dx));
+    if (c.indexOf("t") >= 0) ny0 = Math.max(0, Math.min(r.y1 - 4, r.y0 + dy));
+    if (c.indexOf("b") >= 0) ny1 = Math.min(540, Math.max(r.y0 + 4, r.y1 + dy));
+    selRect = { x0: nx0, y0: ny0, x1: nx1, y1: ny1 };
+    renderSel();
+  });
+  document.addEventListener("mouseup", function () {
+    if (resizeDrag) { resizeDrag = null; updatePreview(); }
+  });
+
+  /* === 2026-08-11 增强: 拖拽排序/色块跳转/拖入导入/批量改名/行菜单 === */
+  var segMenu = document.getElementById("segMenu");
+  var dragRowIdx = null;
+  segTbody.addEventListener("dragstart", function (e) {
+    var tr = e.target.closest("tr"); if (!tr) return;
+    dragRowIdx = +tr.dataset.i;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(dragRowIdx));
+  });
+  segTbody.addEventListener("dragover", function (e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+  segTbody.addEventListener("drop", function (e) {
+    e.preventDefault();
+    var tr = e.target.closest("tr"); if (!tr || dragRowIdx === null) return;
+    var target = +tr.dataset.i;
+    if (target === dragRowIdx) return;
+    pushHist();
+    var item = segments.splice(dragRowIdx, 1)[0];
+    segments.splice(target, 0, item);
+    activeSeg = target;
+    dragRowIdx = null;
+    renderSegs();
+    toast("已调整顺序");
+  });
+  /* 双击时间轴色块 → 跳到该片段起点 */
+  var tlMarksEl = document.getElementById("tlMarks");
+  tlMarksEl.addEventListener("dblclick", function (e) {
+    var seg = e.target.closest(".tl-seg"); if (!seg) return;
+    var i = +seg.dataset.i;
+    if (segments[i]) seekTo(Math.max(0, segments[i].start || 0), false);
+  });
+  /* 拖拽视频文件到窗口 → 上传导入 */
+  window.addEventListener("dragover", function (e) { e.preventDefault(); });
+  window.addEventListener("drop", function (e) {
+    e.preventDefault();
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || !files.length) return;
+    var f = files[0];
+    if (!/\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(f.name)) { toast("不是视频文件: " + f.name, 1); return; }
+    if (!imported && document.querySelector(".stage")) {
+      toast("正在上传: " + f.name);
+    }
+    var rd = new FileReader();
+    rd.onload = function () {
+      fetch("/api/upload", { method: "POST", headers: { "X-Filename": encodeURIComponent(f.name) }, body: rd.result })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.ok) { addVideo(d.path); toast("已导入: " + (d.name || f.name)); }
+          else toast("导入失败: " + (d && d.error || "?"), 1);
+        }).catch(function () { toast("导入失败(网络错误)", 1); });
+    };
+    rd.onerror = function () { toast("读取文件失败", 1); };
+    rd.readAsArrayBuffer(f);
+  });
+  /* 批量改名 */
+  document.getElementById("batchRenameBtn").onclick = function () {
+    if (!segments.length) { toast("没有片段", 1); return; }
+    pushHist();
+    var n = 0;
+    segments.forEach(function (s) { if (s.enabled !== false) { n++; s.name = "片段" + n; } });
+    renderSegs();
+    toast("已重命名 " + n + " 段");
+  };
+  /* 行 ⋯ 菜单 */
+  segTbody.addEventListener("click", function (e) {
+    var btn = e.target.closest(".more-btn");
+    if (!btn) return;
+    var tr = btn.closest("tr"); if (!tr) return;
+    segMenu.dataset.i = tr.dataset.i;
+    var r = btn.getBoundingClientRect();
+    segMenu.style.display = "block";
+    segMenu.style.left = Math.max(8, Math.min(r.right - 120, window.innerWidth - 130)) + "px";
+    segMenu.style.top = (r.bottom + 4) + "px";
+    e.stopPropagation();
+  });
+  document.addEventListener("click", function () { segMenu.style.display = "none"; });
+  segMenu.addEventListener("click", function (e) {
+    var act = e.target.dataset.act;
+    var i = +this.dataset.i;
+    if (isNaN(i) || i >= segments.length || !act) { this.style.display = "none"; return; }
+    pushHist();
+    if (act === "copy") segments.splice(i + 1, 0, JSON.parse(JSON.stringify(segments[i])));
+    else if (act === "clear") { segments[i].start = 0; segments[i].end = 0; }
+    else if (act === "top") { var it = segments.splice(i, 1)[0]; segments.unshift(it); }
+    else if (act === "del") segments.splice(i, 1);
+    if (activeSeg >= segments.length) activeSeg = -1;
+    renderSegs();
+    this.style.display = "none";
+  });
+</script>
+</body>
+</html>

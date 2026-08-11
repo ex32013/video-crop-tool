@@ -1,0 +1,13 @@
+# 运行/测试产物(不要提交)
+__pycache__/
+裁剪输出/
+上传/
+设置.json
+_logs/
+*.log
+
+# 操作系统/编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
