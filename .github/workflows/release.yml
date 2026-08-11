@@ -1,0 +1,95 @@
+name: Build & Release
+
+# 自动构建各平台可执行文件 + 自动发布 Release
+# 触发: 推送 v1.0.0 / 1.0.0 形式的 tag, 或手动 Run workflow
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: video-crop-tool-windows-x64.exe
+            exe: video-crop-tool.exe
+          - os: ubuntu-latest
+            artifact: video-crop-tool-linux-x64
+            exe: video-crop-tool-linux
+          - os: macos-latest
+            artifact: video-crop-tool-macos-x64
+            exe: video-crop-tool-macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build (Windows)
+        run: |
+          python -m PyInstaller --onefile --name "$env:MATRIX_EXE" `
+            --add-data "index.html;." `
+            start_server.py
+        shell: pwsh
+        if: runner.os == 'Windows'
+        env:
+          MATRIX_EXE: ${{ matrix.exe }}
+
+      - name: Build (Unix)
+        run: |
+          python -m PyInstaller --onefile --name "${{ matrix.exe }}" \
+            --add-data "index.html:." \
+            start_server.py
+        shell: bash
+        if: runner.os != 'Windows'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.exe }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Determine tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          name: v${{ steps.tag.outputs.TAG }}
+          generate_release_notes: true
+          files: |
+            artifacts/*
+            README.md

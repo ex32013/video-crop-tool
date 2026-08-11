@@ -28,7 +28,14 @@ import sys
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+# PyInstaller 打包支持: frozen 时 __file__ 在临时 _MEIPASS, 数据文件(index.html)从那里取;
+# 用户数据(上传/设置)存可执行文件所在目录, 便于便携。
+if getattr(sys, "frozen", False):
+    ROOT = os.path.dirname(os.path.abspath(sys.executable))      # exe 所在目录: 用户数据
+    STATIC_ROOT = sys._MEIPASS                                   # 内嵌 index.html 等
+else:
+    ROOT = os.path.dirname(os.path.abspath(__file__))
+    STATIC_ROOT = ROOT
 SETTINGS_FILE = os.path.join(ROOT, "设置.json")
 
 
@@ -381,7 +388,7 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             path = path.replace("\\", "/")
             if ".." in path.split("/"):
                 return False
-            fpath = os.path.normpath(os.path.join(ROOT, path))
+            fpath = os.path.normpath(os.path.join(STATIC_ROOT, path))
             if not os.path.isfile(fpath):
                 return False
             return self._serve_file(fpath, rng)
@@ -428,7 +435,7 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     import webbrowser
-    os.chdir(ROOT)
+    os.chdir(STATIC_ROOT)
     host = "127.0.0.1"
     port = 8003
     if len(sys.argv) > 1 and sys.argv[1].isdigit():
