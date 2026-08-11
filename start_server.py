@@ -51,8 +51,32 @@ def save_settings(obj):
         return False
 
 
+def _auto_install_imageio_ffmpeg():
+    """找不到 ffmpeg 时自动 pip 安装 imageio-ffmpeg。默认源 60s 超时失败 → 换清华镜像重试。只跑一次。"""
+    global _AUTO_INSTALLED
+    if _AUTO_INSTALLED:
+        return None
+    _AUTO_INSTALLED = True
+    try:
+        cmd = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "-q",
+               "--timeout", "60", "imageio-ffmpeg"]
+        r = subprocess.run(cmd, capture_output=True, timeout=180)
+        if r.returncode != 0:
+            # 默认源失败(常见于国内网络) → 换清华镜像
+            cmd = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "-q",
+                   "-i", "https://pypi.tuna.tsinghua.edu.cn/simple", "imageio-ffmpeg"]
+            subprocess.run(cmd, capture_output=True, timeout=300)
+        try:
+            import imageio_ffmpeg
+            return imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            return None
+    except Exception:
+        return None
+
+
 def _find_ffmpeg():
-    """查找 ffmpeg: PATH → imageio_ffmpeg(若已安装) → 常见安装位置。跨平台。"""
+    """查找 ffmpeg: PATH → imageio_ffmpeg(已装) → 自动 pip 安装 → 常见安装位置。跨平台。"""
     c = shutil.which("ffmpeg")
     if c:
         return c
@@ -61,6 +85,10 @@ def _find_ffmpeg():
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
         pass
+    # 自动安装依赖(60s 失败换清华镜像)
+    exe = _auto_install_imageio_ffmpeg()
+    if exe:
+        return exe
     cands = [
         os.path.join(os.environ.get("ProgramFiles", ""), "ffmpeg", "bin", "ffmpeg.exe"),
         os.path.join(os.environ.get("ProgramFiles(x86)", ""), "ffmpeg", "bin", "ffmpeg.exe"),
@@ -72,6 +100,9 @@ def _find_ffmpeg():
         if p and os.path.exists(p):
             return p
     return None
+
+
+_AUTO_INSTALLED = False
 
 
 def list_drives():
