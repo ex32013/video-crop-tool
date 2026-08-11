@@ -4,6 +4,7 @@ __pycache__/
 上传/
 设置.json
 _logs/
+dist/
 *.log
 
 # 操作系统/编辑器
