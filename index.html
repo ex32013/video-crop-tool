@@ -146,46 +146,46 @@
 </style>
 </head>
 <body>
-<h1>视频裁剪工具</h1>
+<h1 data-i18n="title">视频裁剪工具</h1>
 <div class="bar">
   <span class="grp">
-    <button id="importBtn" title="从本地任意文件夹导入视频">导入视频/文件夹</button>
-    <select id="vlSel" title="已导入的视频, 点击切换" style="min-width:200px">
-      <option value="">— 未加载视频 —</option>
+    <button id="importBtn" data-i18n="import" data-i18n-title="importTitle">导入视频/文件夹</button>
+    <select id="vlSel" data-i18n-title="vlTitle" style="min-width:200px">
+      <option value="" data-i18n="noVideoOption">— 未加载视频 —</option>
     </select>
   </span>
   <span class="grp">
-    <button id="playBtn" class="btn-sec">播放</button>
-    <button id="replayBtn" class="btn-sec">重播</button>
-    <button id="speedBtn">倍速 ×1</button>
+    <button id="playBtn" class="btn-sec" data-i18n="play">播放</button>
+    <button id="replayBtn" class="btn-sec" data-i18n="replay">重播</button>
+    <button id="speedBtn" data-i18n="speed">倍速 ×1</button>
   </span>
   <span class="grp">
-    <button id="unimportBtn" title="取消导入, 回到空白" style="display:none">取消导入</button>
-    <button id="clearBtn">清除选区</button>
-    <button id="fullBtn" class="btn-sec" title="选区重置为全屏 1920×1080">全屏</button>
-    <label style="font-size:12px;color:#86909C">比例</label>
+    <button id="unimportBtn" title="取消导入, 回到空白" style="display:none" data-i18n="unimport">取消导入</button>
+    <button id="clearBtn" data-i18n="clearSel">清除选区</button>
+    <button id="fullBtn" class="btn-sec" data-i18n="full">全屏</button>
+    <label style="font-size:12px;color:#86909C" data-i18n="aspect">比例</label>
     <select id="ratioSel" style="padding:3px 6px;font-size:12px">
-      <option value="free">自由</option>
+      <option value="free" data-i18n="ratioFree">自由</option>
       <option value="16:9">16:9</option>
       <option value="9:16">9:16</option>
       <option value="1:1">1:1</option>
     </select>
     <select id="presetSel" style="padding:3px 6px;font-size:12px">
-      <option value="">预设尺寸…</option>
-      <option value="full">全屏 1920×1080</option>
-      <option value="vs">竖屏 9:16</option>
-      <option value="cover">封面 1:1</option>
+      <option value="" data-i18n="preset">预设尺寸…</option>
+      <option value="full" data-i18n="presetFull">全屏 1920×1080</option>
+      <option value="vs" data-i18n="presetVS">竖屏 9:16</option>
+      <option value="cover" data-i18n="presetCover">封面 1:1</option>
     </select>
-    <button id="cmpBtn" class="btn-sec" title="原图/裁剪预览对比">原图</button>
-    <button id="zoomResetBtn" title="画面缩放重置(滚轮缩放, Alt+拖拽平移)">缩放 100%</button>
-    <label style="font-size:12px;color:#86909C" title="播放音量">音量</label>
+    <button id="cmpBtn" class="btn-sec" data-i18n="original">原图</button>
+    <button id="zoomResetBtn" data-i18n="zoomReset">缩放 100%</button>
+    <label style="font-size:12px;color:#86909C" data-i18n="volume">音量</label>
     <input type="range" id="volSlider" min="0" max="100" value="100" style="width:70px;padding:0">
   </span>
   <span class="grp">
-    <button id="setBtn" title="自定义快捷键">设置</button>
-    <label title="当前视频时间跳转(秒)">跳转至(秒):</label>
+    <button id="langBtn" title="中/English">中</button><button id="setBtn" title="自定义快捷键" data-i18n="settings">设置</button>
+    <label title="当前视频时间跳转(秒)" data-i18n="gotoLabel">跳转至(秒):</label>
     <input type="number" id="frameInput" value="0" min="0" step="0.1" style="width:90px">
-    <button id="gotoBtn">跳转</button>
+    <button id="gotoBtn" data-i18n="goto">跳转</button>
     <span style="font-size:12px;color:#808A9C" id="durLabel"></span>
   </span>
 </div>
@@ -194,27 +194,27 @@
     <video id="video" playsinline preload="auto" muted></video>
     <div id="selmask"><div class="mk-t"></div><div class="mk-b"></div><div class="mk-l"></div><div class="mk-r"></div></div>
     <div id="thirdsOverlay" style="display:none"></div>
-    <div id="emptyOverlay"><div class="empty-in"><b>视频裁剪工具</b><br>点击「导入视频/文件夹」开始</div></div>
+    <div id="emptyOverlay"><div class="empty-in"><b data-i18n="title">视频裁剪工具</b><br><span data-i18n="emptyHint">点击「导入视频/文件夹」开始</span></div></div>
     <div id="sel"><span class="hl tl"></span><span class="hl tr"></span><span class="hl bl"></span><span class="hl br"></span></div>
     <div id="selcoords"></div>
-    <div id="info">鼠标拖拽框选裁剪区域</div>
+    <div id="info" data-i18n="info">鼠标拖拽框选裁剪区域</div>
   </div>
   <div class="side">
-    <h3>裁剪预览</h3>
+    <h3 data-i18n="cropPreview">裁剪预览</h3>
     <div class="preview-box"><img id="preview" alt=""></div>
     <div class="coord" id="coord">—</div>
-    <div class="xyrow" title="选区坐标(1920×1080原图像素)">
+    <div class="xyrow" data-i18n-title="xyTitle">
       <input type="number" id="xyX" placeholder="X"><input type="number" id="xyY" placeholder="Y">
       <input type="number" id="xyW" placeholder="W"><input type="number" id="xyH" placeholder="H">
     </div>
     <div class="row" style="margin-top:8px">
-      <button id="copySelBtn" class="mini" title="复制选区坐标到剪贴板">复制选区</button>
-      <button id="pasteSelBtn" class="mini" title="从剪贴板粘贴坐标">粘贴</button>
-      <button id="thirdsBtn" class="mini" title="三分构图辅助线">三分线</button>
+      <button id="copySelBtn" class="mini" data-i18n="copySel">复制选区</button>
+      <button id="pasteSelBtn" class="mini" data-i18n="pasteSel">粘贴</button>
+      <button id="thirdsBtn" class="mini" data-i18n="thirds">三分线</button>
     </div>
     <div class="warn-msg" id="selWarn"></div>
-    <div class="tip">框选预览 · 坐标 = 1920×1080 原图像素 · 右击复制坐标</div>
-    <button id="shortcutBtn" class="mini" style="margin-top:8px">⌨ 快捷键设置</button>
+    <div class="tip" data-i18n="tip">框选预览 · 坐标 = 1920×1080 原图像素</div>
+    <button id="shortcutBtn" class="mini" style="margin-top:8px" data-i18n="shortcuts">⌨ 快捷键设置</button>
   </div>
 </div>
 <div class="tl-bar">
@@ -233,82 +233,82 @@
 
 <div class="seg-box">
   <div class="seg-head">
-    <h3>时间片段</h3>
-    <button id="newSegBtn" title="新建一个空白片段(起止时间与选区稍后设置)">①创建空白片段</button>
-    <button id="setStartBtn" class="btn-sec" title="把当前视频时间写入选中的片段作为开始">②设为起始(当前时间)</button>
-    <button id="setEndBtn" class="btn-sec" title="把当前视频时间写入选中的片段作为结束">③设为结束(当前时间)</button>
-    <button id="setCropBtn" title="把当前框选的区域写入选中片段(未框选则用全图)">④导入当前坐标(默认全图)</button>
-    <button id="exportBtn" class="btn-primary" title="把勾选的片段用 ffmpeg 裁剪导出">导出勾选 → ffmpeg</button>
-    <button id="cancelExportBtn" class="btn-danger">取消导出</button>
-    <button id="batchDelBtn" class="btn-danger" title="删除勾选的片段">删除勾选</button>
-    <button id="batchQBtn" title="把当前画质应用到所有勾选片段">批量画质</button>
-    <button id="batchRenameBtn" title="把勾选片段按顺序重命名为 片段1/2/3…">批量改名</button>
-    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="nameTplChk" title="文件名 = 原文件名_起止时间_裁剪坐标">自动命名</label>
+    <h3 data-i18n="clips">时间片段</h3>
+    <button id="newSegBtn" data-i18n="newSeg">①创建空白片段</button>
+    <button id="setStartBtn" class="btn-sec" data-i18n="setStart">②设为起始(当前时间)</button>
+    <button id="setEndBtn" class="btn-sec" data-i18n="setEnd">③设为结束(当前时间)</button>
+    <button id="setCropBtn" data-i18n="setCrop">④导入当前坐标(默认全图)</button>
+    <button id="exportBtn" class="btn-primary" data-i18n="exportBtn">导出勾选 → ffmpeg</button>
+    <button id="cancelExportBtn" class="btn-danger" data-i18n="cancelExport">取消导出</button>
+    <button id="batchDelBtn" class="btn-danger" data-i18n="batchDel">删除勾选</button>
+    <button id="batchQBtn" data-i18n="batchQ">批量画质</button>
+    <button id="batchRenameBtn" data-i18n="batchRename">批量改名</button>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="nameTplChk"><span data-i18n="autoName">自动命名</span></label>
   </div>
   <div class="seg-head grp-line">
-    <h3 style="font-size:13px;color:#E4E8F0">导出参数</h3>
-    <label style="font-size:12px;color:#86909C">编码
+    <h3 style="font-size:13px;color:#E4E8F0" data-i18n="exportOpts">导出参数</h3>
+    <label style="font-size:12px;color:#86909C"><span data-i18n="codec">编码</span>
       <select id="codecSel" style="padding:3px 6px;font-size:12px">
         <option value="h264" selected>H.264</option>
         <option value="av1">AV1</option>
       </select>
     </label>
-    <label style="font-size:12px;color:#86909C">格式
+    <label style="font-size:12px;color:#86909C"><span data-i18n="fmt">格式</span>
       <select id="fmtSel" style="padding:3px 6px;font-size:12px">
         <option value="mp4" selected>MP4</option>
         <option value="mov">MOV</option>
         <option value="mkv">MKV</option>
       </select>
     </label>
-    <label style="font-size:12px;color:#86909C">画质
+    <label style="font-size:12px;color:#86909C"><span data-i18n="quality">画质</span>
       <select id="qSel" style="padding:3px 6px;font-size:12px">
-        <option value="high">高</option>
-        <option value="medium" selected>中</option>
-        <option value="low">低</option>
+        <option value="high" data-i18n="qHigh">高</option>
+        <option value="medium" selected data-i18n="qMid">中</option>
+        <option value="low" data-i18n="qLow">低</option>
       </select>
     </label>
-    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="fmtDefaultChk"> 设为默认</label>
-    <label style="font-size:12px;color:#86909C" title="同时裁剪几个片段(ffmpeg 多开, 吃 CPU)">并行
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="fmtDefaultChk"> <span data-i18n="setDefault">设为默认</span></label>
+    <label style="font-size:12px;color:#86909C"><span data-i18n="parallel">并行</span>
       <select id="concSel" style="padding:3px 6px;font-size:12px">
         <option value="1" selected>1</option>
         <option value="2">2</option>
         <option value="4">4</option>
       </select>
     </label>
-    <label style="margin-left:auto;font-size:12px;color:#86909C"><input type="checkbox" id="audioChk" checked> 保留原声</label>
-    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="openFolderChk"> 导出后打开文件夹</label>
+    <label style="margin-left:auto;font-size:12px;color:#86909C"><input type="checkbox" id="audioChk" checked> <span data-i18n="keepAudio">保留原声</span></label>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="openFolderChk"> <span data-i18n="openFolder">导出后打开文件夹</span></label>
   </div>
   <div class="seg-head grp-line">
-    <h3 style="font-size:13px;color:#E4E8F0">导出位置</h3>
-    <input id="exportDirInput" readonly spellcheck="false" placeholder="默认: 浏览器下载目录" style="flex:1;min-width:180px;font-size:12px">
-    <button id="browseDirBtn">浏览…</button>
-    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="dirDefaultChk"> 设为默认</label>
+    <h3 style="font-size:13px;color:#E4E8F0" data-i18n="exportLoc">导出位置</h3>
+    <input id="exportDirInput" readonly spellcheck="false" data-i18n-ph="exportLocDefault" style="flex:1;min-width:180px;font-size:12px">
+    <button id="browseDirBtn" data-i18n="browse">浏览…</button>
+    <label style="font-size:12px;color:#86909C"><input type="checkbox" id="dirDefaultChk"> <span data-i18n="setDefault">设为默认</span></label>
   </div>
   <table id="segTable">
-    <thead><tr><th><input type="checkbox" id="selAllChk" title="全选/全不选"></th><th>名称</th><th>开始(s)</th><th>结束(s)</th><th>选区(1920×1080)</th><th>操作</th></tr></thead>
+    <thead><tr><th><input type="checkbox" id="selAllChk" title="全选/全不选"></th><th data-i18n="colName">名称</th><th data-i18n="colStart">开始(s)</th><th data-i18n="colEnd">结束(s)</th><th data-i18n="colCrop">选区(1920×1080)</th><th data-i18n="colAction">操作</th></tr></thead>
     <tbody id="segTbody"></tbody>
   </table>
   <div id="exportStatus" class="export-status"></div>
   <details class="coord-fold" style="margin-top:14px">
-    <summary>坐标导出 / 导入(高级)</summary>
+    <summary data-i18n="coordAdv">坐标导出 / 导入(高级)</summary>
     <div class="seg-head">
-      <button id="exportCoordBtn">导出JSON</button>
-      <button id="exportCSVBtn">导出CSV</button>
-      <button id="importCoordBtn">导入坐标</button>
-      <button id="clearSegsBtn" class="btn-danger">清空片段</button>
+      <button id="exportCoordBtn" data-i18n="exportJSON">导出JSON</button>
+      <button id="exportCSVBtn" data-i18n="exportCSV">导出CSV</button>
+      <button id="importCoordBtn" data-i18n="importCoord">导入坐标</button>
+      <button id="clearSegsBtn" class="btn-danger" data-i18n="clearAll">清空片段</button>
       <input type="file" id="coordFile" accept=".json,.txt,application/json,text/plain" style="display:none">
     </div>
-    <textarea id="coordXfer" rows="3" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;background:#10141f;color:#d7dee8;border:1px solid rgba(255,255,255,0.18);border-radius:6px;padding:8px" placeholder="坐标格式: 每行一段 JSON; 导出存成文件, 导入读文件恢复(导入前会预览确认)"></textarea>
+    <textarea id="coordXfer" rows="3" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;background:#10141f;color:#d7dee8;border:1px solid rgba(255,255,255,0.18);border-radius:6px;padding:8px" data-i18n-ph="coordPlaceholder"></textarea>
   </details>
 </div>
 
 <div class="fs-modal" id="fsModal">
   <div class="fs-box">
     <div class="fs-head">
-      <button id="fsUp" title="上级目录">↑ 上级</button>
+      <button id="fsUp" data-i18n="fsUp">↑ 上级</button>
       <input id="fsPath" value="" spellcheck="false">
-      <button id="fsGo">转到</button>
-      <button id="fsPickDir" style="display:none">✓ 选定此目录</button>
+      <button id="fsGo" data-i18n="fsGo">转到</button>
+      <button id="fsPickDir" style="display:none" data-i18n="fsPick">✓ 选定此目录</button>
       <button id="fsClose">✕</button>
     </div>
     <div class="fs-body" id="fsList"></div>
@@ -318,24 +318,26 @@
 <div class="set-modal" id="setModal">
   <div class="set-box">
     <div class="set-head">
-      <h3>快捷键设置</h3>
-      <button id="setReset">恢复默认</button>
+      <h3 data-i18n="setTitle">快捷键设置</h3>
+      <button id="setReset" data-i18n="resetDefault">恢复默认</button>
       <button id="setClose">✕</button>
     </div>
     <div class="set-body" id="setBody"></div>
-    <div class="set-tip">点「录制」后按下新按键(可带 Ctrl/Shift/Alt); Esc 取消录制</div>
+    <div class="set-tip" data-i18n="setTip">点「录制」后按下新按键(可带 Ctrl/Shift/Alt); Esc 取消录制</div>
   </div>
 </div>
 
 <div class="toast" id="toast" style="display:none"></div>
 <div class="seg-menu" id="segMenu" style="display:none">
-  <div class="seg-menu-item" data-act="copy">复制片段</div>
-  <div class="seg-menu-item" data-act="clear">清空时间</div>
-  <div class="seg-menu-item" data-act="top">置顶</div>
-  <div class="seg-menu-item danger" data-act="del">删除</div>
+  <div class="seg-menu-item" data-act="copy" data-i18n="menuCopy">复制片段</div>
+  <div class="seg-menu-item" data-act="clear" data-i18n="menuClear">清空时间</div>
+  <div class="seg-menu-item" data-act="top" data-i18n="menuTop">置顶</div>
+  <div class="seg-menu-item danger" data-act="del" data-i18n="del">删除</div>
 </div>
 <script>
-  var vid = document.getElementById("video");
+  var I18N = {"zh": {"title": "\u89c6\u9891\u88c1\u526a\u5de5\u5177", "emptyHint": "\u70b9\u51fb\u300c\u5bfc\u5165\u89c6\u9891/\u6587\u4ef6\u5939\u300d\u5f00\u59cb", "info": "\u9f20\u6807\u62d6\u62fd\u6846\u9009\u88c1\u526a\u533a\u57df", "novideo": "\u672a\u52a0\u8f7d\u89c6\u9891 \u2014 \u8bf7\u300c\u5bfc\u5165\u89c6\u9891/\u6587\u4ef6\u5939\u300d", "noVideoOption": "\u2014 \u672a\u52a0\u8f7d\u89c6\u9891 \u2014", "import": "\u5bfc\u5165\u89c6\u9891/\u6587\u4ef6\u5939", "importTitle": "\u4ece\u672c\u5730\u4efb\u610f\u6587\u4ef6\u5939\u5bfc\u5165\u89c6\u9891", "vlTitle": "\u5df2\u5bfc\u5165\u7684\u89c6\u9891, \u70b9\u51fb\u5207\u6362", "play": "\u64ad\u653e", "replay": "\u91cd\u64ad", "speed": "\u500d\u901f", "unimport": "\u53d6\u6d88\u5bfc\u5165", "clearSel": "\u6e05\u9664\u9009\u533a", "full": "\u5168\u5c4f", "aspect": "\u6bd4\u4f8b", "ratioFree": "\u81ea\u7531", "preset": "\u9884\u8bbe\u5c3a\u5bf8\u2026", "presetFull": "\u5168\u5c4f 1920\u00d71080", "presetVS": "\u7ad6\u5c4f 9:16", "presetCover": "\u5c01\u9762 1:1", "original": "\u539f\u56fe", "crop": "\u88c1\u526a", "zoomReset": "\u7f29\u653e 100%", "volume": "\u97f3\u91cf", "settings": "\u8bbe\u7f6e", "gotoLabel": "\u8df3\u8f6c\u81f3(\u79d2):", "goto": "\u8df3\u8f6c", "cropPreview": "\u88c1\u526a\u9884\u89c8", "xyTitle": "\u9009\u533a\u5750\u6807(1920\u00d71080\u539f\u56fe\u50cf\u7d20)", "copySel": "\u590d\u5236\u9009\u533a", "pasteSel": "\u7c98\u8d34", "thirds": "\u4e09\u5206\u7ebf", "tip": "\u6846\u9009\u9884\u89c8 \u00b7 \u5750\u6807 = 1920\u00d71080 \u539f\u56fe\u50cf\u7d20", "shortcuts": "\u2328 \u5feb\u6377\u952e\u8bbe\u7f6e", "clips": "\u65f6\u95f4\u7247\u6bb5", "newSeg": "\u2460\u521b\u5efa\u7a7a\u767d\u7247\u6bb5", "setStart": "\u2461\u8bbe\u4e3a\u8d77\u59cb(\u5f53\u524d\u65f6\u95f4)", "setEnd": "\u2462\u8bbe\u4e3a\u7ed3\u675f(\u5f53\u524d\u65f6\u95f4)", "setCrop": "\u2463\u5bfc\u5165\u5f53\u524d\u5750\u6807(\u9ed8\u8ba4\u5168\u56fe)", "exportBtn": "\u5bfc\u51fa\u52fe\u9009 \u2192 ffmpeg", "cancelExport": "\u53d6\u6d88\u5bfc\u51fa", "batchDel": "\u5220\u9664\u52fe\u9009", "batchQ": "\u6279\u91cf\u753b\u8d28", "batchRename": "\u6279\u91cf\u6539\u540d", "autoName": "\u81ea\u52a8\u547d\u540d", "exportOpts": "\u5bfc\u51fa\u53c2\u6570", "codec": "\u7f16\u7801", "fmt": "\u683c\u5f0f", "quality": "\u753b\u8d28", "qHigh": "\u9ad8", "qMid": "\u4e2d", "qLow": "\u4f4e", "setDefault": "\u8bbe\u4e3a\u9ed8\u8ba4", "parallel": "\u5e76\u884c", "keepAudio": "\u4fdd\u7559\u539f\u58f0", "openFolder": "\u5bfc\u51fa\u540e\u6253\u5f00\u6587\u4ef6\u5939", "exportLoc": "\u5bfc\u51fa\u4f4d\u7f6e", "browse": "\u6d4f\u89c8\u2026", "colName": "\u540d\u79f0", "colStart": "\u5f00\u59cb(s)", "colEnd": "\u7ed3\u675f(s)", "colCrop": "\u9009\u533a(1920\u00d71080)", "colAction": "\u64cd\u4f5c", "coordAdv": "\u5750\u6807\u5bfc\u51fa / \u5bfc\u5165(\u9ad8\u7ea7)", "exportJSON": "\u5bfc\u51faJSON", "exportCSV": "\u5bfc\u51faCSV", "importCoord": "\u5bfc\u5165\u5750\u6807", "clearAll": "\u6e05\u7a7a\u7247\u6bb5", "setTitle": "\u5feb\u6377\u952e\u8bbe\u7f6e", "resetDefault": "\u6062\u590d\u9ed8\u8ba4", "record": "\u5f55\u5236", "pressKey": "\u6309\u4efb\u610f\u952e\u2026", "setTip": "\u70b9\u300c\u5f55\u5236\u300d\u540e\u6309\u4e0b\u65b0\u6309\u952e(\u53ef\u5e26 Ctrl/Shift/Alt); Esc \u53d6\u6d88\u5f55\u5236", "a_playPause": "\u64ad\u653e / \u6682\u505c", "a_back01": "\u540e\u9000 0.1s", "a_fwd01": "\u524d\u8fdb 0.1s", "a_back05": "\u540e\u9000 0.5s", "a_fwd05": "\u524d\u8fdb 0.5s", "a_back1": "\u540e\u9000 1s", "a_fwd1": "\u524d\u8fdb 1s", "a_replay": "\u91cd\u64ad", "a_import": "\u5bfc\u5165\u89c6\u9891/\u6587\u4ef6\u5939", "a_unimport": "\u53d6\u6d88\u5bfc\u5165", "a_full": "\u5168\u5c4f\u9009\u533a", "a_clearSel": "\u6e05\u9664\u9009\u533a", "a_goto": "\u8df3\u8f6c\u5230\u8f93\u5165\u65f6\u95f4", "a_speed": "\u500d\u901f\u5faa\u73af", "a_addSeg": "\u2460\u521b\u5efa\u7a7a\u767d\u7247\u6bb5", "a_setStart": "\u2461\u8bbe\u4e3a\u8d77\u59cb", "a_setEnd": "\u2462\u8bbe\u4e3a\u7ed3\u675f", "a_setCrop": "\u2463\u5bfc\u5165\u5f53\u524d\u5750\u6807", "a_export": "\u5bfc\u51fa\u52fe\u9009\u7247\u6bb5", "a_cancelExport": "\u53d6\u6d88\u5bfc\u51fa", "a_undo": "\u64a4\u9500 Ctrl+Z", "a_redo": "\u91cd\u505a Ctrl+Y", "fsUp": "\u2191 \u4e0a\u7ea7", "fsGo": "\u8f6c\u5230", "fsPick": "\u2713 \u9009\u5b9a\u6b64\u76ee\u5f55", "loading": "\u52a0\u8f7d\u4e2d...", "emptyDir": "(\u7a7a\u76ee\u5f55)", "videoInvalid": "\u89c6\u9891\u6587\u4ef6\u65e0\u6548\u6216\u65e0\u6cd5\u64ad\u653e, \u8bf7\u68c0\u67e5\u6587\u4ef6\u683c\u5f0f", "setDirFirst": "\u8bf7\u5148\u8bbe\u7f6e\u5bfc\u51fa\u4f4d\u7f6e: \u5728\u5f39\u51fa\u7684\u76ee\u5f55\u91cc\u8fdb\u5230\u76ee\u6807\u6587\u4ef6\u5939, \u70b9\u300c\u2713 \u9009\u5b9a\u6b64\u76ee\u5f55\u300d(\u53ef\u52fe\u9009\u300c\u8bbe\u4e3a\u9ed8\u8ba4\u300d\u4e0b\u6b21\u514d\u9009)", "noChecked": "\u6ca1\u6709\u52fe\u9009\u7684\u7247\u6bb5(\u52fe\u9009\u8981\u5bfc\u51fa\u7684\u884c)", "createSegFirst": "\u8bf7\u5148\u300c\u2460\u521b\u5efa\u7a7a\u767d\u7247\u6bb5\u300d\u518d\u70b9\u884c\u9009\u4e2d\u5b83", "noValid": "\u6587\u4ef6\u65e0\u6548: \u672a\u8bc6\u522b\u5230\u6709\u6548\u5750\u6807", "undo": "\u5df2\u64a4\u9500", "redo": "\u5df2\u91cd\u505a", "noUndo": "\u6ca1\u6709\u53ef\u64a4\u9500\u7684\u64cd\u4f5c", "noRedo": "\u6ca1\u6709\u53ef\u91cd\u505a\u7684\u64cd\u4f5c", "exportDone": "\u5bfc\u51fa\u5b8c\u6210", "cancelled": "\u5df2\u53d6\u6d88", "allDone": "\u5168\u90e8\u5b8c\u6210", "cropping": "\u88c1\u526a\u4e2d...", "imported": "\u5df2\u5bfc\u5165:", "uploading": "\u6b63\u5728\u4e0a\u4f20:", "importFail": "\u5bfc\u5165\u5931\u8d25", "readFail": "\u8bfb\u53d6\u6587\u4ef6\u5931\u8d25", "notVideo": "\u4e0d\u662f\u89c6\u9891\u6587\u4ef6", "renamed": "\u5df2\u91cd\u547d\u540d", "reordered": "\u5df2\u8c03\u6574\u987a\u5e8f", "copiedCoord": "\u5df2\u590d\u5236\u9009\u533a\u5750\u6807", "pasteCoord": "\u5df2\u7c98\u8d34\u9009\u533a", "copyFail": "\u590d\u5236\u5931\u8d25", "noClip": "\u5f53\u524d\u73af\u5883\u4e0d\u652f\u6301\u526a\u8d34\u677f", "noClipRead": "\u65e0\u6cd5\u8bfb\u53d6\u526a\u8d34\u677f", "noSelYet": "\u5148\u6846\u9009\u533a\u57df", "noSegs": "\u6ca1\u6709\u7247\u6bb5", "preparing": "\u51c6\u5907\u5bfc\u51fa", "exporting": "\u5bfc\u51fa\u4e2d", "estimated": "\u9884\u8ba1\u8fd8\u9700\u7ea6", "doneCount": "\u5df2\u5b8c\u6210", "keyOccupied": "\u8be5\u6309\u952e\u5df2\u88ab\u300c%s\u300d\u5360\u7528", "invalidEmpty": "\u6587\u4ef6\u4e3a\u7a7a\u6216\u65e0\u6cd5\u8bfb\u53d6", "coordPlaceholder": "\u5750\u6807\u683c\u5f0f: \u6bcf\u884c\u4e00\u6bb5 JSON; \u5bfc\u51fa\u5b58\u6210\u6587\u4ef6, \u5bfc\u5165\u8bfb\u6587\u4ef6\u6062\u590d(\u5bfc\u5165\u524d\u4f1a\u9884\u89c8\u786e\u8ba4)", "exportLocDefault": "\u9ed8\u8ba4: \u6d4f\u89c8\u5668\u4e0b\u8f7d\u76ee\u5f55", "segUnit": "\u6bb5", "done": "\u5b8c\u6210", "failed": "\u5931\u8d25", "del": "\u5220\u9664", "more": "\u66f4\u591a\u64cd\u4f5c", "pickSel": "\u7528\u5f53\u524d\u9009\u533a\u66f4\u65b0\u672c\u884c", "estimateHint": "\u6309\u9ed8\u8ba4\u901f\u5ea6\u4f30\u7b97", "menuCopy": "\u590d\u5236\u7247\u6bb5", "menuClear": "\u6e05\u7a7a\u65f6\u95f4", "menuTop": "\u7f6e\u9876", "deletedSegs": "\u5df2\u5220\u9664 %s \u6bb5", "qualitySet": "\u5df2\u4e3a\u52fe\u9009\u7247\u6bb5\u8bbe\u7f6e\u753b\u8d28: %s", "csvExported": "\u5df2\u5bfc\u51fa CSV", "renamedSegs": "\u5df2\u91cd\u547d\u540d %s \u6bb5", "exportDoneSegs": "\u5bfc\u51fa\u5b8c\u6210 %s \u6bb5", "importConfirm": "\u5c06\u5bfc\u5165 %s \u4e2a\u7247\u6bb5(\u8ffd\u52a0\u5230\u73b0\u6709 %s \u6761, \u53ef\u7528 Ctrl+Z \u64a4\u9500)\u3002\u786e\u5b9a\u5bfc\u5165?"}, "en": {"title": "Video Crop Tool", "emptyHint": "Click \"Import Video/Folder\" to start", "info": "Drag to select a crop region", "novideo": "No video \u2014 click \"Import Video/Folder\"", "noVideoOption": "\u2014 No video loaded \u2014", "import": "Import Video/Folder", "importTitle": "Import a video from any local folder", "vlTitle": "Imported videos, click to switch", "play": "Play", "replay": "Replay", "speed": "Speed", "unimport": "Cancel Import", "clearSel": "Clear Selection", "full": "Full", "aspect": "Aspect", "ratioFree": "Free", "preset": "Presets\u2026", "presetFull": "Full 1920\u00d71080", "presetVS": "Vertical 9:16", "presetCover": "Square 1:1", "original": "Original", "crop": "Crop", "zoomReset": "Zoom 100%", "volume": "Volume", "settings": "Settings", "gotoLabel": "Go to (s):", "goto": "Go", "cropPreview": "Crop Preview", "xyTitle": "Selection coords (1920\u00d71080 px)", "copySel": "Copy Selection", "pasteSel": "Paste", "thirds": "Thirds", "tip": "Drag to preview \u00b7 coords = 1920\u00d71080 px", "shortcuts": "\u2328 Shortcuts", "clips": "Clips", "newSeg": "\u2460New Empty Clip", "setStart": "\u2461Set Start (now)", "setEnd": "\u2462Set End (now)", "setCrop": "\u2463Apply Selection (Full if none)", "exportBtn": "Export Checked \u2192 ffmpeg", "cancelExport": "Cancel Export", "batchDel": "Delete Checked", "batchQ": "Batch Quality", "batchRename": "Batch Rename", "autoName": "Auto Name", "exportOpts": "Export Options", "codec": "Codec", "fmt": "Format", "quality": "Quality", "qHigh": "High", "qMid": "Medium", "qLow": "Low", "setDefault": "Set as Default", "parallel": "Parallel", "keepAudio": "Keep Audio", "openFolder": "Open folder after export", "exportLoc": "Export Location", "browse": "Browse\u2026", "colName": "Name", "colStart": "Start(s)", "colEnd": "End(s)", "colCrop": "Crop(1920\u00d71080)", "colAction": "Action", "coordAdv": "Coordinates (Advanced)", "exportJSON": "Export JSON", "exportCSV": "Export CSV", "importCoord": "Import Coords", "clearAll": "Clear All", "setTitle": "Shortcut Settings", "resetDefault": "Reset Defaults", "record": "Record", "pressKey": "Press a key\u2026", "setTip": "Click Record then press a key (Ctrl/Shift/Alt OK); Esc cancels", "a_playPause": "Play / Pause", "a_back01": "Back 0.1s", "a_fwd01": "Forward 0.1s", "a_back05": "Back 0.5s", "a_fwd05": "Forward 0.5s", "a_back1": "Back 1s", "a_fwd1": "Forward 1s", "a_replay": "Replay", "a_import": "Import Video/Folder", "a_unimport": "Cancel Import", "a_full": "Full Selection", "a_clearSel": "Clear Selection", "a_goto": "Go to entered time", "a_speed": "Speed cycle", "a_addSeg": "\u2460New Clip", "a_setStart": "\u2461Set Start", "a_setEnd": "\u2462Set End", "a_setCrop": "\u2463Apply Selection", "a_export": "Export checked", "a_cancelExport": "Cancel Export", "a_undo": "Undo Ctrl+Z", "a_redo": "Redo Ctrl+Y", "fsUp": "\u2191 Up", "fsGo": "Go", "fsPick": "\u2713 Use this folder", "loading": "Loading...", "emptyDir": "(empty)", "videoInvalid": "Invalid or unplayable video file", "setDirFirst": "Please set an export location: navigate to the target folder and click \"\u2713 Use this folder\" (check \"Set as Default\" to skip next time)", "noChecked": "No checked clips (check rows to export)", "createSegFirst": "Create a clip first, then click a row to select", "noValid": "Invalid file: no valid coordinates", "undo": "Undone", "redo": "Redone", "noUndo": "Nothing to undo", "noRedo": "Nothing to redo", "exportDone": "Export complete", "cancelled": "Cancelled", "allDone": "All done", "cropping": "Cropping...", "imported": "Imported:", "uploading": "Uploading:", "importFail": "Import failed", "readFail": "Failed to read file", "notVideo": "Not a video file", "renamed": "Renamed", "reordered": "Reordered", "copiedCoord": "Copied selection coords", "pasteCoord": "Pasted selection", "copyFail": "Copy failed", "noClip": "Clipboard not supported here", "noClipRead": "Cannot read clipboard", "noSelYet": "Select an area first", "noSegs": "No clips", "preparing": "Preparing export", "exporting": "Exporting", "estimated": "~remaining", "doneCount": "done", "keyOccupied": "Key already used by \"%s\"", "invalidEmpty": "Empty or unreadable file", "coordPlaceholder": "One JSON segment per line; export to file, import restores (with preview)", "exportLocDefault": "Default: browser Downloads", "segUnit": "clips", "done": "Done", "failed": "Failed", "del": "Delete", "more": "More", "pickSel": "Use current selection", "estimateHint": "estimated by default speed", "menuCopy": "Duplicate", "menuClear": "Clear times", "menuTop": "Move to top", "deletedSegs": "Deleted %s", "qualitySet": "Quality set for checked: %s", "csvExported": "CSV exported", "renamedSegs": "Renamed %s", "exportDoneSegs": "Export complete: %s clips", "importConfirm": "Import %s clips (append to existing %s, Ctrl+Z to undo). Proceed?"}};
+  var lang = "zh";
+    var vid = document.getElementById("video");
   var sel = document.getElementById("sel");
   var preview = document.getElementById("preview");
   var coord = document.getElementById("coord");
@@ -346,14 +348,14 @@
     return imported || "";
   }
   function baseName(p) { p = String(p || ""); return p.split(/[\\/]/).pop() || p; }
-  function loadVideo() {
+    function loadVideo() {
     if (imported) {
       vid.src = "/api/stream?path=" + encodeURIComponent(imported);
     } else {
       /* 空白态 */
       vid.removeAttribute("src");
       try { vid.load(); } catch (e) {}
-      document.getElementById("durLabel").textContent = "未加载视频 — 请「导入视频/文件夹」";
+      document.getElementById("durLabel").textContent = t("novideo");
       updateImportBtn();
       updateVideoState();
       var eo = document.getElementById("emptyOverlay"); if (eo) eo.style.display = "flex";
@@ -374,7 +376,7 @@
   function updateImportBtn() {
     var b = document.getElementById("unimportBtn");
     if (!b) return;
-    if (imported) { b.style.display = ""; b.disabled = false; b.textContent = "取消导入"; }
+    if (imported) { b.style.display = ""; b.disabled = false; b.textContent = t("unimport"); }
     else { b.style.display = "none"; }   // 空白态不显示
   }
   vid.addEventListener("loadedmetadata", function () {
@@ -387,7 +389,7 @@
   });
   vid.addEventListener("error", function () {
     if (!vid.getAttribute("src")) return;
-    alert("视频文件无效或无法播放, 请检查文件格式");
+    alert(t("videoInvalid"));
   });
   /* 2026-08-11 时间轴拖动 seek + 步进微调 + 裁剪预览随时间实时更新 */
   var tl = document.getElementById("timeline");
@@ -435,7 +437,7 @@
     if (tc) tc.textContent = fmtTc(vid.currentTime) + (isFinite(vid.duration) ? " / " + fmtTc(vid.duration) : "");
   });
   /* 2026-08-11 修复: 统一 seek 逻辑(跳转/重播共用), 等元数据、容错时长未知、seek 异步重试 */
-  var seekTo = function (t, autoplay) {
+    var seekTo = function (t, autoplay) {
     vid.pause();
     document.getElementById("playBtn").textContent = "播放";
     var tries = 0;
@@ -554,7 +556,7 @@
       var ei = document.getElementById("exportDirInput"); if (ei) ei.value = SET.exportDir;
     }
   }
-  function loadSettings() {
+    function loadSettings() {
     fetch("/api/settings").then(function (r) { return r.json(); }).then(function (d) {
       if (d && (d.exportDir || d.keys || d.codec)) applySet(d);
       else { loadLocalFallback(); applySet(SET); }
@@ -595,9 +597,9 @@
     for (var a in KEY_LABELS) {
       var b = K[a];
       h += '<div class="set-row' + (recording === a ? ' rec' : '') + '">' +
-        '<span class="set-lbl">' + KEY_LABELS[a] + '</span>' +
+        '<span class="set-lbl">' + t('a_' + a) + '</span>' +
         '<span class="set-key">' + keyLabel(b) + '</span>' +
-        '<button class="mini rec-btn" data-act="' + a + '">' + (recording === a ? '按任意键…' : '录制') + '</button>' +
+        '<button class="mini rec-btn" data-act="' + a + '">' + (recording === a ? t('pressKey') : t('record')) + '</button>' +
         '</div>';
     }
     document.getElementById("setBody").innerHTML = h;
@@ -628,7 +630,7 @@
       var key = e.key === " " ? "Space" : e.key;
       for (var a in K) {
         if (a !== recording && matchKey({ key: key, code: key, ctrlKey: mods.indexOf("Ctrl") >= 0, shiftKey: mods.indexOf("Shift") >= 0, altKey: mods.indexOf("Alt") >= 0 }, K[a])) {
-          alert("该按键已被「" + KEY_LABELS[a] + "」占用");
+          alert(t("keyOccupied").replace("%s", KEY_LABELS[a]));
           recording = null; renderSet(); return;
         }
       }
@@ -650,7 +652,7 @@
       if (matchKey(e, K[a])) { e.preventDefault(); document.getElementById(ACTION_CLICK[a]).click(); return; }
     }
   });
-var vrate = 1;
+  var vrate = 1;
   var speedBtn = document.getElementById("speedBtn");
   speedBtn.onclick = function () {
     vrate = vrate >= 16 ? 1 : vrate * 2;
@@ -900,7 +902,7 @@ var vrate = 1;
     loadVideo();
     renderVL();
   }
-  function renderVL() {
+    function renderVL() {
     var sel = document.getElementById("vlSel");
     var h = '<option value="">— 未加载视频 —</option>';
     for (var i = 0; i < videoList.length; i++) {
@@ -991,7 +993,7 @@ var vrate = 1;
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
-    alert("已导出 " + segments.length + " 段坐标到文件: " + fn);
+    alert(t("exportDone") + " " + segments.length + " " + t("segUnit"));
   };
   document.getElementById("importCoordBtn").onclick = function () {
     document.getElementById("coordFile").click();
@@ -1003,17 +1005,17 @@ var vrate = 1;
     var rd = new FileReader();
     rd.onload = function () {
       var txt = String(rd.result || "").trim();
-      if (!txt) { alert("文件为空或无法读取"); return; }
+      if (!txt) { alert(t("invalidEmpty")); return; }
       var r = parseCoords(txt);
-      if (!r.ok && r.bad > 0) { alert("文件无效: 未识别到有效坐标(" + r.bad + " 行无效)"); return; }
+      if (!r.ok && r.bad > 0) { alert(t("noValid") + " (" + r.bad + ")"); return; }
       /* 导入前预览确认, 避免误覆盖 */
       if (!r.ok) return;
-      if (!confirm("将导入 " + r.ok + " 个片段(追加到现有 " + segments.length + " 条, 可用 Ctrl+Z 撤销)。\n\n" + r.items.slice(0, 8).map(function (s) { return s.name + "  " + s.start + "→" + s.end + "s"; }).join("\n") + (r.items.length > 8 ? "\n…共" + r.items.length + "段" : "") + "\n\n确定导入?")) return;
+      if (!confirm(t("importConfirm").replace("%s", r.ok).replace("%s", segments.length) + "。\n\n" + r.items.slice(0, 8).map(function (s) { return s.name + "  " + s.start + "→" + s.end + "s"; }).join("\n") + (r.items.length > 8 ? "\n…共" + r.items.length + "段" : "") + "\n\n确定导入?")) return;
       pushHist();
       r.items.forEach(function (s) { segments.push(s); });
       renderSegs();
       document.getElementById("coordXfer").value = txt;
-      toast("已导入 " + r.ok + " 段" + (r.bad ? ", " + r.bad + " 行无效跳过" : ""));
+      toast(t('imported') + ' ' + r.ok + ' ' + t('segUnit') + (r.bad ? ' (' + r.bad + ')' : ''));
     };
     rd.onerror = function () { alert("文件读取失败"); };
     rd.readAsText(f);
@@ -1036,11 +1038,11 @@ var vrate = 1;
       '<td><input class="name" value="' + esc(s.name) + '"></td>' +
       '<td><input class="st" type="number" step="0.1" min="0" value="' + s.start + '"></td>' +
       '<td><input class="en" type="number" step="0.1" min="0" value="' + s.end + '"></td>' +
-      '<td style="font-family:monospace;font-size:12px">' + s.crop.join(",") + ' <button class="mini pick" title="用当前选区更新本行">取选区</button></td>' +
-      '<td><button class="mini del">删除</button> <button class="mini more-btn" title="更多操作">⋯</button></td>' +
+      '<td style="font-family:monospace;font-size:12px">' + s.crop.join(",") + ' <button class="mini pick" title="' + t('pickSel') + '">' + t('pickSel') + '</button></td>' +
+      '<td><button class="mini del">' + t('del') + '</button> <button class="mini more-btn" title="' + t('more') + '">⋯</button></td>' +
       '</tr>';
   }
-  function renderSegs() {
+    function renderSegs() {
     segTbody.innerHTML = segments.map(segRowHtml).join("");
     highlightRows();
     renderMarks();
@@ -1083,8 +1085,8 @@ var vrate = 1;
     var tr = segTbody.querySelector('tr[data-i="' + activeSeg + '"]');
     if (tr) tr.scrollIntoView({ block: "nearest" });
   };
-  function needActive() {
-    if (activeSeg < 0 || activeSeg >= segments.length) { alert("请先「①创建空白片段」再点行选中它"); return null; }
+    function needActive() {
+    if (activeSeg < 0 || activeSeg >= segments.length) { alert(t("createSegFirst")); return null; }
     return segments[activeSeg];
   }
   document.getElementById("setStartBtn").onclick = function () {
@@ -1102,18 +1104,18 @@ var vrate = 1;
     pushHist(); s.crop = currentCrop();   // 无选区时默认全图 [0,0,1920,1080]
     renderSegs();
   };
-  document.getElementById("exportBtn").onclick = doExport;
+    document.getElementById("exportBtn").onclick = doExport;
   var exportCancelled = false;
   var DEFAULT_SPEED = 4;   // 首段未完成时估算用: 每秒编码约处理 4s 视频(实测 ~5.9, 保守取 4)
   document.getElementById("cancelExportBtn").onclick = function () { exportCancelled = true; };
-  function doExport() {
+    function doExport() {
     if (!exportDir) {
       fsOpenDir();
-      alert("请先设置导出位置: 在弹出的目录里进到目标文件夹, 点「✓ 选定此目录」(可勾选「设为默认」下次免选)");
+      alert(t("setDirFirst"));
       return;
     }
     var list = segments.filter(function (s) { return s.enabled !== false; });
-    if (!list.length) { alert("没有勾选的片段(勾选要导出的行)"); return; }
+    if (!list.length) { alert(t("noChecked")); return; }
     var audio = document.getElementById("audioChk").checked;
     var CONCURRENCY = Math.max(1, parseInt(document.getElementById("concSel").value) || 1);
     var total = 0;
@@ -1129,7 +1131,7 @@ var vrate = 1;
       var el = (Date.now() - t0) / 1000;
       var eff = speed > 0 ? speed : DEFAULT_SPEED;
       var eta = Math.max(0, Math.round(pendingDur / eff));
-      setEta('导出中: 已完成 ' + doneCount + '/' + list.length + ' 段, 已用 ' + Math.round(el) + 's, 预计还需约 ' + eta + 's' + (speed > 0 ? '' : '(按默认速度估算)'));
+      setEta(t('exporting') + ': ' + t('doneCount') + ' ' + doneCount + '/' + list.length + ' ' + t('segUnit') + ', ' + Math.round(el) + 's, ' + t('estimated') + ' ' + eta + 's' + (speed > 0 ? '' : ' (' + t('estimateHint') + ')'));
       var pf = document.getElementById("progFill");
       if (pf) pf.style.width = Math.min(100, (doneDur / total * 100)).toFixed(1) + '%';
     }
@@ -1137,7 +1139,7 @@ var vrate = 1;
       var nm = esc(autoName(s));
       var segStart = Date.now();
       var ord = list.indexOf(s) + 1;
-      exportStatus.innerHTML += '<div>[' + ord + "/" + list.length + "] " + nm + " (" + (s.start || 0) + "→" + (s.end || 0) + "s) 裁剪中...</div>";
+      exportStatus.innerHTML += '<div>[' + ord + "/" + list.length + "] " + nm + " (" + (s.start || 0) + "→" + (s.end || 0) + "s) t('cropping')</div>";
       fetch("/api/crop", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input: s.input, start: s.start, end: s.end, crop: s.crop, name: nm, audio: audio, outDir: exportDir,
@@ -1148,7 +1150,7 @@ var vrate = 1;
         var segDur = Math.max(0, (s.end || 0) - (s.start || 0));
         doneDur += segDur; pendingDur -= segDur; doneCount++; pendingCount--; speed = doneDur / ((Date.now() - t0) / 1000);
         if (d.ok) exportStatus.innerHTML += '<div class="ok">✅ 完成(裁' + segDur.toFixed(1) + 's 用' + segEl.toFixed(1) + 's): <a href="' + d.url + '" download>' + esc(d.file) + '</a></div>';
-        else exportStatus.innerHTML += '<div class="err">❌ ' + esc(d.error || "失败") + '</div>';
+        else exportStatus.innerHTML += '<div class="err">❌ ' + esc(d.error || t('failed')) + '</div>';
         workers--; updEta(); pullNext();
       }).catch(function (e2) {
         var segDur = Math.max(0, (s.end || 0) - (s.start || 0));
@@ -1161,10 +1163,10 @@ var vrate = 1;
       while (workers < CONCURRENCY && queue.length && !exportCancelled) { workers++; processOne(queue.shift()); }
       if (pendingCount <= 0 || exportCancelled) {
         clearInterval(etaTimer);
-        if (exportCancelled) setEta('已取消(完成 ' + doneCount + '/' + list.length + ' 段)');
+        if (exportCancelled) setEta(t('cancelled') + '(完成 ' + doneCount + '/' + list.length + ' 段)');
         else {
-          setEta('全部完成 ✅(共 ' + ((Date.now() - t0) / 1000).toFixed(1) + 's)');
-          toast('导出完成 ' + list.length + ' 段');
+          setEta(t('allDone') + ' ✅(共 ' + ((Date.now() - t0) / 1000).toFixed(1) + 's)');
+          toast(t('exportDoneSegs').replace('%s', list.length));
           if (document.getElementById("openFolderChk").checked) {
             fetch("/api/reveal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: exportDir }) }).catch(function () {});
           }
@@ -1234,20 +1236,20 @@ var vrate = 1;
     redoStack = [];
   }
   function undo() {
-    if (!undoStack.length) { toast("没有可撤销的操作", 1); return; }
+    if (!undoStack.length) { toast(t("noUndo"), 1); return; }
     redoStack.push(JSON.stringify(segments));
     segments = JSON.parse(undoStack.pop());
     if (activeSeg >= segments.length) activeSeg = -1;
     renderSegs();
-    toast("已撤销");
+    toast(t("undo"));
   }
   function redo() {
-    if (!redoStack.length) { toast("没有可重做的操作", 1); return; }
+    if (!redoStack.length) { toast(t("noRedo"), 1); return; }
     undoStack.push(JSON.stringify(segments));
     segments = JSON.parse(redoStack.pop());
     if (activeSeg >= segments.length) activeSeg = -1;
     renderSegs();
-    toast("已重做");
+    toast(t("redo"));
   }
   /* 长按连续步进 */
   document.querySelectorAll(".step").forEach(function (btn) {
@@ -1303,11 +1305,11 @@ var vrate = 1;
   });
   /* 复制/粘贴选区 */
   function copySel() {
-    if (!selRect) { toast("先框选区域", 1); return; }
+    if (!selRect) { toast(t("noSelYet"), 1); return; }
     var o = toOrig(selRect);
     var txt = o.x0 + "," + o.y0 + "," + o.x1 + "," + o.y1;
-    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function () { toast("已复制选区坐标 " + txt); }).catch(function () { toast("复制失败", 1); });
-    else toast("当前环境不支持剪贴板", 1);
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function () { toast(t("copiedCoord") + " " + txt); }).catch(function () { toast(t("copyFail"), 1); });
+    else toast(t("noClip"), 1);
   }
   function pasteSel() {
     if (navigator.clipboard && navigator.clipboard.readText) {
@@ -1317,8 +1319,8 @@ var vrate = 1;
         var a = m[0].split(",").map(parseFloat);
         selRect = { x0: a[0] / 2, y0: a[1] / 2, x1: a[2] / 2, y1: a[3] / 2 };
         renderSel(); updatePreview();
-        toast("已粘贴选区 " + m[0]);
-      }).catch(function () { toast("无法读取剪贴板", 1); });
+        toast(t("pasteCoord") + " " + m[0]);
+      }).catch(function () { toast(t("noClipRead"), 1); });
     } else toast("当前环境不支持剪贴板", 1);
   }
   /* 三分线 */
@@ -1347,12 +1349,12 @@ var vrate = 1;
   document.getElementById("batchDelBtn").onclick = function () {
     var before = segments.length;
     var keep = segments.filter(function (s) { return s.enabled === false; });
-    if (keep.length === before) { toast("没有勾选要删除的片段", 1); return; }
+    if (keep.length === before) { toast(t("noChecked"), 1); return; }
     pushHist();
     segments = keep;
     if (activeSeg >= segments.length) activeSeg = -1;
     renderSegs();
-    toast("已删除 " + (before - keep.length) + " 段");
+    toast(t("deletedSegs").replace("%s", before - keep.length));
   };
   document.getElementById("batchQBtn").onclick = function () {
     if (!segments.some(function (s) { return s.enabled !== false; })) { toast("没有勾选的片段", 1); return; }
@@ -1360,11 +1362,11 @@ var vrate = 1;
     var q = document.getElementById("qSel").value;
     segments.forEach(function (s) { if (s.enabled !== false) s.quality = q; });
     renderSegs();
-    toast("已为勾选片段设置画质: " + q);
+    toast(t("qualitySet").replace("%s", q));
   };
   /* CSV 导出 */
   function exportCSV() {
-    if (!segments.length) { toast("没有片段可导出", 1); return; }
+    if (!segments.length) { toast(t("noSegs"), 1); return; }
     var lines = ["name,start,end,x0,y0,x1,y1,input"];
     segments.forEach(function (s) {
       var c = s.crop || [];
@@ -1376,7 +1378,7 @@ var vrate = 1;
     a.download = "裁剪坐标.csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
-    toast("已导出 CSV(" + segments.length + " 行)");
+    toast(t("csvExported"));
   }
   /* 音量 */
   var volEl = document.getElementById("volSlider");
@@ -1473,7 +1475,7 @@ var vrate = 1;
     activeSeg = target;
     dragRowIdx = null;
     renderSegs();
-    toast("已调整顺序");
+    toast(t("reordered"));
   });
   /* 双击时间轴色块 → 跳到该片段起点 */
   var tlMarksEl = document.getElementById("tlMarks");
@@ -1489,30 +1491,30 @@ var vrate = 1;
     var files = e.dataTransfer && e.dataTransfer.files;
     if (!files || !files.length) return;
     var f = files[0];
-    if (!/\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(f.name)) { toast("不是视频文件: " + f.name, 1); return; }
+    if (!/\.(mp4|mov|mkv|webm|m4v|avi)$/i.test(f.name)) { toast(t("notVideo") + ": " + f.name, 1); return; }
     if (!imported && document.querySelector(".stage")) {
-      toast("正在上传: " + f.name);
+      toast(t("uploading") + " " + f.name);
     }
     var rd = new FileReader();
     rd.onload = function () {
       fetch("/api/upload", { method: "POST", headers: { "X-Filename": encodeURIComponent(f.name) }, body: rd.result })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d && d.ok) { addVideo(d.path); toast("已导入: " + (d.name || f.name)); }
-          else toast("导入失败: " + (d && d.error || "?"), 1);
-        }).catch(function () { toast("导入失败(网络错误)", 1); });
+          if (d && d.ok) { addVideo(d.path); toast(t("imported") + " " + (d.name || f.name)); }
+          else toast(t("importFail") + ": " + (d && d.error || "?"), 1);
+        }).catch(function () { toast(t("importFail"), 1); });
     };
-    rd.onerror = function () { toast("读取文件失败", 1); };
+    rd.onerror = function () { toast(t("readFail"), 1); };
     rd.readAsArrayBuffer(f);
   });
   /* 批量改名 */
   document.getElementById("batchRenameBtn").onclick = function () {
-    if (!segments.length) { toast("没有片段", 1); return; }
+    if (!segments.length) { toast(t("noSegs"), 1); return; }
     pushHist();
     var n = 0;
     segments.forEach(function (s) { if (s.enabled !== false) { n++; s.name = "片段" + n; } });
     renderSegs();
-    toast("已重命名 " + n + " 段");
+    toast(t("renamedSegs").replace("%s", n));
   };
   /* 行 ⋯ 菜单 */
   segTbody.addEventListener("click", function (e) {
@@ -1540,6 +1542,25 @@ var vrate = 1;
     renderSegs();
     this.style.display = "none";
   });
+  
+  /* === 2026-08-11 中英双语 i18n === */
+    function t(k){ var v=(I18N[lang]&&I18N[lang][k]); return v!==undefined?v:((I18N.zh[k]!==undefined)?I18N.zh[k]:k); }
+  function applyLang(){
+    document.querySelectorAll("[data-i18n]").forEach(function(el){ el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-title]").forEach(function(el){ el.title = t(el.dataset.i18nTitle); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function(el){ el.placeholder = t(el.dataset.i18nPh); });
+    var sp=document.getElementById("speedBtn"); if(sp) sp.textContent = t("speed")+" ×"+vrate;
+    var cb=document.getElementById("cmpBtn"); if(cb) cb.textContent = compareMode?t("crop"):t("original");
+    var lb=document.getElementById("langBtn"); if(lb) lb.textContent = lang==="zh"?"EN":"中";
+    if(typeof renderSet==="function") renderSet();
+    if(typeof renderVL==="function") renderVL();
+    if(typeof renderSegs==="function") renderSegs();
+    if(typeof updateVideoState==="function") updateVideoState();
+    if(typeof updateImportBtn==="function") updateImportBtn();
+  }
+  document.getElementById("langBtn").onclick=function(){ lang = lang==="zh"?"en":"zh"; try{localStorage.setItem("cropLang",lang);}catch(e){} applyLang(); };
+  try{ lang = localStorage.getItem("cropLang") || "zh"; }catch(e){}
+  applyLang();
 </script>
 </body>
 </html>
