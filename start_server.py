@@ -59,11 +59,22 @@ def save_settings(obj):
 
 
 def _auto_install_imageio_ffmpeg():
-    """找不到 ffmpeg 时自动 pip 安装 imageio-ffmpeg。默认源 60s 超时失败 → 换清华镜像重试。只跑一次。"""
+    """找不到 ffmpeg 时自动 pip 安装 imageio-ffmpeg。默认源 60s 超时失败 → 换清华镜像重试。只跑一次。
+    frozen(PyInstaller)时: 优先用打包自带的 imageio_ffmpeg 二进制; 若未打包则提示。"""
     global _AUTO_INSTALLED
     if _AUTO_INSTALLED:
         return None
     _AUTO_INSTALLED = True
+    # frozen 且已打包 imageio_ffmpeg → 直接用内置二进制
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        pass
+    if getattr(sys, "frozen", False):
+        # 打包后无法再 pip install(解释器不在), 提示用户
+        print("提示: 本程序未内置 ffmpeg。请安装 ffmpeg 或重新打包时加入 imageio-ffmpeg。")
+        return None
     try:
         cmd = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "-q",
                "--timeout", "60", "imageio-ffmpeg"]
@@ -297,7 +308,26 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
         super().end_headers()
+
+    def _csrf_ok(self):
+        """CSRF/DNS rebinding 防护: 校验 Origin/Referer 必须来自本机"""
+        origin = self.headers.get("Origin") or self.headers.get("Referer") or ""
+        if not origin:
+            return True  # 非浏览器请求(命令行), 无 CSRF 风险
+        from urllib.parse import urlparse
+        try:
+            host = urlparse(origin).hostname or ""
+        except Exception:
+            return False
+        if host in ("127.0.0.1", "localhost", "::1", "[::1]", "0.0.0.0"):
+            return True
+        if host and (host.startswith("127.") or host == "::1"):
+            return True
+        return False
 
     def _send_json(self, obj):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -311,6 +341,9 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         qs = urllib.parse.parse_qs(parsed.query)
         rng = self.headers.get("Range")
+        if parsed.path.startswith("/api/") and not self._csrf_ok():
+            self._send_json({"ok": False, "error": "cross-origin request blocked"})
+            return
         if parsed.path == "/api/drives":
             self._send_json({"drives": list_drives()})
             return
@@ -328,8 +361,11 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             if not os.path.isfile(fpath):
                 self.send_error(404)
                 return
+            # Range 请求优先; 失败(已发头)则不再二次响应
             if rng and rng.startswith("bytes="):
                 if self._serve_file(fpath, rng):
+                    return
+                if self._response_started():
                     return
             self._serve_file(fpath, None)
             return
@@ -337,6 +373,10 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             if self._serve_range(rng):
                 return
         super().do_GET()
+
+    def _response_started(self):
+        """是否已开始发送响应(防止二次响应)"""
+        return getattr(self, "_resp_started", False)
 
     def _serve_file(self, fpath, rng):
         try:
@@ -348,15 +388,31 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
                 if "-" not in spec:
                     return False
                 a, b = spec.split("-", 1)
-                start = int(a) if a else 0
-                end = int(b) if b else size - 1
+                if a:
+                    try:
+                        start = int(a)
+                    except ValueError:
+                        return False
+                    end = int(b) if b else size - 1
+                elif b:
+                    # bytes=-N (最后 N 字节)
+                    try:
+                        n = int(b)
+                    except ValueError:
+                        return False
+                    if n <= 0:
+                        return False
+                    start = max(0, size - n)
+                    end = size - 1
+                else:
+                    return False
                 if start >= size:
                     self.send_response(416)
                     self.send_header("Content-Range", "bytes */%d" % size)
                     self.send_header("Content-Length", "0")
                     self.end_headers()
                     return True
-                end = min(end, size - 1)
+                end = min(max(end, start), size - 1)
                 code = 206
             length = end - start + 1
             self.send_response(code)
@@ -367,6 +423,7 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", self.guess_type(fpath))
             self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
             self.end_headers()
+            self._resp_started = True
             with open(fpath, "rb") as f:
                 f.seek(start)
                 remaining = length
@@ -396,6 +453,9 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             return False
 
     def do_POST(self):
+        if not self._csrf_ok():
+            self._send_json({"ok": False, "error": "cross-origin request blocked"})
+            return
         path = self.path.rstrip("/")
         if path == "/api/crop":
             try:
@@ -416,6 +476,9 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         if path == "/api/upload":
             try:
                 length = int(self.headers.get("Content-Length", 0))
+                if length > 4 * 1024 * 1024 * 1024:
+                    self._send_json({"ok": False, "error": "文件过大(>4GB)"})
+                    return
                 raw = self.rfile.read(length)
                 fname = urllib.parse.unquote(self.headers.get("X-Filename", ""))
                 self._send_json(handle_upload(raw, fname))
@@ -441,12 +504,16 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1].isdigit():
         port = int(sys.argv[1])
     # 端口占用自动顺延(最多 +20)
+    server = None
     for _ in range(20):
         try:
             server = ThreadingHTTPServer((host, port), NoCacheHandler)
             break
         except OSError:
             port += 1
+    if server is None:
+        print("错误: 端口 8003~8022 均被占用, 无法启动")
+        sys.exit(1)
     server.daemon_threads = True
     print(f"视频裁剪工具已启动: http://{host}:{port}/  (根目录: {ROOT})")
     print("按 Ctrl+C 停止")

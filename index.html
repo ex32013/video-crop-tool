@@ -810,7 +810,7 @@
   var segments = [];
   var segTbody = document.getElementById("segTbody");
   var exportStatus = document.getElementById("exportStatus");
-  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 
   /* === 2026-08-11 导入视频/文件夹: 服务器文件浏览弹窗(/api/fs + /api/stream) === */
   var fsModal = document.getElementById("fsModal");
@@ -1038,7 +1038,7 @@
       '<td><input class="name" value="' + esc(s.name) + '"></td>' +
       '<td><input class="st" type="number" step="0.1" min="0" value="' + s.start + '"></td>' +
       '<td><input class="en" type="number" step="0.1" min="0" value="' + s.end + '"></td>' +
-      '<td style="font-family:monospace;font-size:12px">' + s.crop.join(",") + ' <button class="mini pick" title="' + t('pickSel') + '">' + t('pickSel') + '</button></td>' +
+      '<td style="font-family:monospace;font-size:12px">' + esc(s.crop.join(",")) + ' <button class="mini pick" title="' + t('pickSel') + '">' + t('pickSel') + '</button></td>' +
       '<td><button class="mini del">' + t('del') + '</button> <button class="mini more-btn" title="' + t('more') + '">⋯</button></td>' +
       '</tr>';
   }
