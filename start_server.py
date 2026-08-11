@@ -93,19 +93,29 @@ def _auto_install_imageio_ffmpeg():
         return None
 
 
+_FFMPEG_CACHE = None
+
+
 def _find_ffmpeg():
-    """查找 ffmpeg: PATH → imageio_ffmpeg(已装) → 自动 pip 安装 → 常见安装位置。跨平台。"""
+    """查找 ffmpeg: PATH → imageio_ffmpeg(已装) → 自动 pip 安装 → 常见安装位置。跨平台。
+    结果缓存, 避免每次裁剪都重新探测。"""
+    global _FFMPEG_CACHE
+    if _FFMPEG_CACHE:
+        return _FFMPEG_CACHE
     c = shutil.which("ffmpeg")
     if c:
+        _FFMPEG_CACHE = c
         return c
     try:
         import imageio_ffmpeg
-        return imageio_ffmpeg.get_ffmpeg_exe()
+        _FFMPEG_CACHE = imageio_ffmpeg.get_ffmpeg_exe()
+        return _FFMPEG_CACHE
     except Exception:
         pass
     # 自动安装依赖(60s 失败换清华镜像)
     exe = _auto_install_imageio_ffmpeg()
     if exe:
+        _FFMPEG_CACHE = exe
         return exe
     cands = [
         os.path.join(os.environ.get("ProgramFiles", ""), "ffmpeg", "bin", "ffmpeg.exe"),
@@ -116,6 +126,7 @@ def _find_ffmpeg():
     ]
     for p in cands:
         if p and os.path.exists(p):
+            _FFMPEG_CACHE = p
             return p
     return None
 
@@ -242,6 +253,8 @@ def handle_crop(body):
         end = float(body.get("end", start + 3))
     except (TypeError, ValueError):
         return {"ok": False, "error": "时间参数无效"}
+    if start < 0:
+        return {"ok": False, "error": "开始时间不能为负数"}
     if end <= start:
         return {"ok": False, "error": "结束时间必须大于开始时间"}
     crop = body.get("crop") or [0, 0, 1920, 1080]
