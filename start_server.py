@@ -301,6 +301,11 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 
     def _csrf_ok(self):
         """CSRF/DNS rebinding 防护: 校验 Origin/Referer 必须来自本机"""
+        # 浏览器对子资源的跨站请求(Sec-Fetch-Site: cross-site)一律拒绝:
+        # 堵住 <img src="http://127.0.0.1:PORT/api/stream?path=..."> 盲读任意本地文件
+        # (该类简单请求无 Origin 头, 原有 Origin 检查拦不住; 本机页面/命令行无此头或为 same-origin)
+        if (self.headers.get("Sec-Fetch-Site") or "").lower() == "cross-site":
+            return False
         origin = self.headers.get("Origin") or self.headers.get("Referer") or ""
         if not origin:
             return True  # 非浏览器请求(命令行), 无 CSRF 风险
