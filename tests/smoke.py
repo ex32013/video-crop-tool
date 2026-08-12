@@ -109,7 +109,8 @@ def main():
             for f in fails:
                 print("  -", f)
             sys.exit(1)
-        print("SMOKE OK: 主页/API/CSRF/body限制 全部通过")
+        # 纯 ASCII 输出(Windows CI 默认 cp1252, 中文 print 会 UnicodeEncodeError)
+        print("SMOKE OK: home/API/CSRF/body-limit all passed")
     finally:
         srv.shutdown()
 
