@@ -41,7 +41,21 @@ def http(path, method="GET", body=None, headers=None):
 def main():
     srv = start_server()
     try:
-        time.sleep(0.3)
+        # 轮询等待服务器就绪(Windows runner 启动慢, 固定 sleep 会竞态)
+        ready = False
+        for _ in range(50):
+            try:
+                st, body = http("/api/fs")
+                if st == 200:
+                    ready = True
+                    break
+            except Exception:
+                pass
+            time.sleep(0.2)
+        if not ready:
+            print("SMOKE FAILED: 服务器 10s 内未就绪")
+            sys.exit(1)
+
         fails = []
 
         st, body = http("/")
