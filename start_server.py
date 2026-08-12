@@ -200,33 +200,6 @@ def _safe_name(name):
     return re.sub(r'[\\/:*?"<>|]+', "_", str(name or "").strip()).strip(" ._") or "clip"
 
 
-def handle_upload(raw, fname):
-    """POST /api/upload: 接收拖入的视频文件, 存到 上传/ 目录, 返回可导入路径。"""
-    if not fname:
-        return {"ok": False, "error": "缺少文件名"}
-    if not raw:
-        return {"ok": False, "error": "空文件"}
-    if len(raw) > 4 * 1024 * 1024 * 1024:
-        return {"ok": False, "error": "文件过大(>4GB)"}
-    out_dir = os.path.join(ROOT, "上传")
-    os.makedirs(out_dir, exist_ok=True)
-    name = _safe_name(fname)
-    stem, ext = os.path.splitext(name)
-    if not ext:
-        ext = ".mp4"
-    path = os.path.join(out_dir, stem + ext)
-    i = 2
-    while os.path.exists(path):
-        path = os.path.join(out_dir, "%s_%d%s" % (stem, i, ext))
-        i += 1
-    try:
-        with open(path, "wb") as f:
-            f.write(raw)
-    except Exception as e:
-        return {"ok": False, "error": "写入失败: " + str(e)}
-    return {"ok": True, "path": path, "name": os.path.basename(path)}
-
-
 def handle_reveal(path):
     """POST /api/reveal: 打开导出目录(Windows os.startfile / 其他 xdg-open)。"""
     if not path or not os.path.isdir(path):
@@ -333,14 +306,13 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             return True  # 非浏览器请求(命令行), 无 CSRF 风险
         from urllib.parse import urlparse
         try:
-            host = urlparse(origin).hostname or ""
+            host = (urlparse(origin).hostname or "").lower()
         except Exception:
             return False
-        if host in ("127.0.0.1", "localhost", "::1", "[::1]", "0.0.0.0"):
-            return True
-        if host and (host.startswith("127.") or host == "::1"):
-            return True
-        return False
+        if not host:
+            return False
+        # 精确匹配本机地址, 禁止 127.* 前缀通配(防 127.0.0.1.evil.com 域名绕过)
+        return host in ("127.0.0.1", "localhost", "::1", "0.0.0.0")
 
     def _send_json(self, obj):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
@@ -465,46 +437,107 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         except Exception:
             return False
 
+    def _read_json(self):
+        """读取并解析 JSON body, 带 1MB 上限与容错。
+        超限时流式丢弃 body 后返回标记, 避免客户端连接中断。"""
+        try:
+            ln = int(self.headers.get("Content-Length", 0))
+        except (TypeError, ValueError):
+            ln = 0
+        if ln <= 0:
+            return {}
+        if ln > 1024 * 1024:
+            # 丢弃剩余 body(不累积进内存), 再告知调用方拒绝
+            remaining = ln
+            while remaining > 0:
+                chunk = self.rfile.read(min(65536, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+            return {"__too_large__": True}
+        try:
+            return json.loads(self.rfile.read(ln).decode("utf-8", "replace"))
+        except Exception:
+            return {}
+
     def do_POST(self):
         if not self._csrf_ok():
             self._send_json({"ok": False, "error": "cross-origin request blocked"})
             return
         path = self.path.rstrip("/")
         if path == "/api/crop":
-            try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace"))
-                self._send_json(handle_crop(body))
-            except Exception as e:
-                self._send_json({"ok": False, "error": str(e)})
+            body = self._read_json()
+            if "__too_large__" in body:
+                self._send_json({"ok": False, "error": "请求过大"})
+                return
+            self._send_json(handle_crop(body))
             return
         if path == "/api/settings":
-            try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace"))
-                self._send_json({"ok": save_settings(body)})
-            except Exception as e:
-                self._send_json({"ok": False, "error": str(e)})
+            body = self._read_json()
+            if "__too_large__" in body:
+                self._send_json({"ok": False, "error": "请求过大"})
+                return
+            self._send_json({"ok": save_settings(body)})
             return
         if path == "/api/upload":
             try:
                 length = int(self.headers.get("Content-Length", 0))
-                if length > 4 * 1024 * 1024 * 1024:
-                    self._send_json({"ok": False, "error": "文件过大(>4GB)"})
+            except (TypeError, ValueError):
+                length = 0
+            if length > 4 * 1024 * 1024 * 1024:
+                self._send_json({"ok": False, "error": "文件过大(>4GB)"})
+                return
+            # 流式写盘, 避免整文件读入内存(小内存机器 OOM)
+            fname = urllib.parse.unquote(self.headers.get("X-Filename", ""))
+            out_dir = os.path.join(ROOT, "上传")
+            os.makedirs(out_dir, exist_ok=True)
+            if not fname:
+                self._send_json({"ok": False, "error": "缺少文件名"})
+                return
+            name = _safe_name(fname)
+            stem, ext = os.path.splitext(name)
+            if not ext:
+                ext = ".mp4"
+            ext = ext.lower()
+            # 扩展名白名单, 防上传可执行/HTML 等
+            if ext.lstrip(".") not in ("mp4", "mov", "mkv", "webm", "avi", "m4v", "ts", "flv", "wmv"):
+                self._send_json({"ok": False, "error": "不支持的文件类型: " + ext})
+                return
+            # Windows 保留名(CON/PRN/AUX/NUL/COM1..9/LPT1..9)清洗
+            stem = re.sub(r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$", "_" + "\\1", stem, flags=re.IGNORECASE)
+            path0 = os.path.join(out_dir, stem + ext)
+            i = 2
+            while os.path.exists(path0):
+                path0 = os.path.join(out_dir, "%s_%d%s" % (stem, i, ext))
+                i += 1
+            try:
+                with open(path0, "wb") as f:
+                    remaining = length
+                    while remaining > 0:
+                        chunk = self.rfile.read(min(65536, remaining))
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        remaining -= len(chunk)
+                if remaining > 0:
+                    # 客户端中途断开/长度虚大: 删除残缺文件并报错, 不误报成功
+                    try:
+                        os.remove(path0)
+                    except Exception:
+                        pass
+                    self._send_json({"ok": False, "error": "上传不完整, 已中止"})
                     return
-                raw = self.rfile.read(length)
-                fname = urllib.parse.unquote(self.headers.get("X-Filename", ""))
-                self._send_json(handle_upload(raw, fname))
             except Exception as e:
-                self._send_json({"ok": False, "error": str(e)})
+                self._send_json({"ok": False, "error": "写入失败: " + str(e)})
+                return
+            self._send_json({"ok": True, "path": path0, "name": os.path.basename(path0)})
             return
         if path == "/api/reveal":
-            try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = json.loads(self.rfile.read(length).decode("utf-8", "replace"))
-                self._send_json(handle_reveal(body.get("path")))
-            except Exception as e:
-                self._send_json({"ok": False, "error": str(e)})
+            body = self._read_json()
+            if "__too_large__" in body:
+                self._send_json({"ok": False, "error": "请求过大"})
+                return
+            self._send_json(handle_reveal(body.get("path")))
             return
         self.send_error(405)
 

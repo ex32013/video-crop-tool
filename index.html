@@ -1136,20 +1136,21 @@
       if (pf) pf.style.width = Math.min(100, (doneDur / total * 100)).toFixed(1) + '%';
     }
     function processOne(s) {
-      var nm = esc(autoName(s));
+      var rawNm = autoName(s);
+      var nm = esc(rawNm);
       var segStart = Date.now();
       var ord = list.indexOf(s) + 1;
       exportStatus.innerHTML += '<div>[' + ord + "/" + list.length + "] " + nm + " (" + (s.start || 0) + "→" + (s.end || 0) + "s) t('cropping')</div>";
       fetch("/api/crop", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: s.input, start: s.start, end: s.end, crop: s.crop, name: nm, audio: audio, outDir: exportDir,
+        body: JSON.stringify({ input: s.input, start: s.start, end: s.end, crop: s.crop, name: rawNm, audio: audio, outDir: exportDir,
           format: document.getElementById("fmtSel").value, quality: s.quality || document.getElementById("qSel").value,
           codec: document.getElementById("codecSel").value })
       }).then(function (r) { return r.json(); }).then(function (d) {
         var segEl = (Date.now() - segStart) / 1000;
         var segDur = Math.max(0, (s.end || 0) - (s.start || 0));
         doneDur += segDur; pendingDur -= segDur; doneCount++; pendingCount--; speed = doneDur / ((Date.now() - t0) / 1000);
-        if (d.ok) exportStatus.innerHTML += '<div class="ok">✅ 完成(裁' + segDur.toFixed(1) + 's 用' + segEl.toFixed(1) + 's): <a href="' + d.url + '" download>' + esc(d.file) + '</a></div>';
+        if (d.ok) exportStatus.innerHTML += '<div class="ok">✅ 完成(裁' + segDur.toFixed(1) + 's 用' + segEl.toFixed(1) + 's): <a href="' + esc(d.url) + '" download>' + esc(d.file) + '</a></div>';
         else exportStatus.innerHTML += '<div class="err">❌ ' + esc(d.error || t('failed')) + '</div>';
         workers--; updEta(); pullNext();
       }).catch(function (e2) {
